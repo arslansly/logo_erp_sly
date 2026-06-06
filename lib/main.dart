@@ -11,13 +11,29 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('tr_TR', null);
 
-  // Kayıtlı sunucu adresini Dio'ya uygula (ayarlar ekranından gelir)
-  await settingsService.applyServerUrl();
+  // Tarih biçimlendirme (tr_TR) — hata olursa uygulama yine de açılmalı.
+  try {
+    await initializeDateFormatting('tr_TR', null);
+  } catch (e, s) {
+    debugPrint('initializeDateFormatting hatası: $e\n$s');
+  }
+
+  // Kayıtlı sunucu adresini Dio'ya uygula (ayarlar ekranından gelir).
+  // flutter_secure_storage iOS Keychain'e erişir; ilk açılışta hata
+  // fırlatabilir — yakalayıp varsayılan adresle devam ediyoruz.
+  try {
+    await settingsService.applyServerUrl();
+  } catch (e, s) {
+    debugPrint('applyServerUrl hatası: $e\n$s');
+  }
 
   // JWT token cache'ini önceden doldur (image widget'ları sync token okur)
-  await apiClient.getToken();
+  try {
+    await apiClient.getToken();
+  } catch (e, s) {
+    debugPrint('getToken hatası: $e\n$s');
+  }
 
   // 401 yakalandığında login'e yönlendir
   ApiClient.setOn401Callback(() {
