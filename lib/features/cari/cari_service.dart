@@ -20,11 +20,17 @@ class CariService {
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => Cari.fromJson(json as Map<String, dynamic>))
+          .where((cari) => !_isBosKayit(cari))
           .toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
+
+  // Logo'nun sistemsel boş cari kaydı (CLCARD.LOGICALREF=1, CODE='ÿ' / 0xFF)
+  // gerçek bir cari değildir; listede gösterilmez.
+  bool _isBosKayit(Cari cari) =>
+      cari.id == 1 || cari.code.trim() == 'ÿ';
 
   Future<Cari> getCariById(int id) async {
     try {
