@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "git add -A && if ! git diff --cached --quiet; then git commit -q -m \"auto: degisiklikler kaydedildi $(date '+%Y-%m-%d %H:%M:%S')\" && git push -q origin main; fi",
+            "statusMessage": "Otomatik commit + push (main)...",
+            "timeout": 90
+          }
+        ]
+      }
+    ]
+  }
+}
