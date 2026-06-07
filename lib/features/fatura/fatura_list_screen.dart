@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../auth/auth_service.dart';
 import 'fatura_detay_screen.dart';
 import 'fatura_form_screen.dart';
 import 'fatura_model.dart';
@@ -66,21 +67,23 @@ class _FaturaListScreenState extends State<FaturaListScreen>
           _FaturaListTab(mode: _ListMode.hatali),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.surface,
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FaturaFormScreen()),
-          );
-          if (!mounted) return;
-          // Form kapanınca taslak/hatalı sekmelerini tazele
-          setState(() {});
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Yeni Fatura'),
-      ),
+      floatingActionButton: authService.perms.canCreateBelge
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FaturaFormScreen()),
+                );
+                if (!mounted) return;
+                // Form kapanınca taslak/hatalı sekmelerini tazele
+                setState(() {});
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Yeni Fatura'),
+            )
+          : null,
     );
   }
 }
@@ -642,21 +645,25 @@ class _FaturaKarti extends StatelessWidget {
                       label: 'Düzenle',
                       onTap: onEdit,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _ActionBtn(
-                      icon: mode == _ListMode.hatali
-                          ? Icons.refresh_rounded
-                          : Icons.cloud_upload_rounded,
-                      label: mode == _ListMode.hatali ? 'Tekrar Dene' : 'Aktar',
-                      onTap: onTransfer,
-                      primary: true,
-                    ),
+                    if (authService.perms.canTransferBelge) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      _ActionBtn(
+                        icon: mode == _ListMode.hatali
+                            ? Icons.refresh_rounded
+                            : Icons.cloud_upload_rounded,
+                        label:
+                            mode == _ListMode.hatali ? 'Tekrar Dene' : 'Aktar',
+                        onTap: onTransfer,
+                        primary: true,
+                      ),
+                    ],
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded),
-                      color: AppColors.slate400,
-                      onPressed: onDelete,
-                    ),
+                    if (authService.perms.canDeleteBelge)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        color: AppColors.slate400,
+                        onPressed: onDelete,
+                      ),
                   ],
                 ),
               ],

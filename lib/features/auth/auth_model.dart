@@ -46,6 +46,8 @@ class UserInfo {
   final String fullName;
   final String email;
   final String role;
+  // Effective yetkiler (backend hesaplar: rol varsayılanı + override).
+  final List<String> permissions;
 
   UserInfo({
     required this.id,
@@ -53,6 +55,7 @@ class UserInfo {
     required this.fullName,
     required this.email,
     required this.role,
+    this.permissions = const [],
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
@@ -62,6 +65,10 @@ class UserInfo {
       fullName: json['fullName'] as String? ?? '',
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? '',
+      permissions: (json['permissions'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 }

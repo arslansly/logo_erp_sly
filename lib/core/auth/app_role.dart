@@ -82,37 +82,66 @@ enum AppRole {
   }
 }
 
-/// Bir role karşılık gelen yetki seti. Matris bu sınıfta yaşar.
+/// İnce yetki anahtarları — backend `AppPermissions` ile birebir aynı.
+/// Effective yetki seti backend'den (login yanıtı) gelir; rol yalnızca
+/// varsayılanları belirler (asıl karar backend'de hesaplanır).
+class Perm {
+  Perm._();
+
+  static const viewReports = 'view_reports';
+  static const viewFinancialReports = 'view_financial_reports';
+  static const viewStokCost = 'view_stok_cost';
+  static const viewDashboardFinancials = 'view_dashboard_financials';
+  static const createBelge = 'create_belge';
+  static const transferBelge = 'transfer_belge';
+  static const deleteBelge = 'delete_belge';
+  static const manageUsers = 'manage_users';
+  static const editSettings = 'edit_settings';
+
+  /// Katalog sırası — admin yetki editörü bu sırayla gösterir.
+  static const all = <String>[
+    viewReports,
+    viewFinancialReports,
+    viewStokCost,
+    viewDashboardFinancials,
+    createBelge,
+    transferBelge,
+    deleteBelge,
+    manageUsers,
+    editSettings,
+  ];
+
+  /// Admin editöründe gösterilen Türkçe etiketler.
+  static const labels = <String, String>{
+    viewReports: 'Raporlar (şirket raporları)',
+    viewFinancialReports: 'Finansal rapor (cari bakiye, vade)',
+    viewStokCost: 'Stok maliyet / alış fiyatı',
+    viewDashboardFinancials: 'Ana sayfa finansalları',
+    createBelge: 'Belge oluştur (fatura/sipariş/irsaliye)',
+    transferBelge: "Belgeyi LOGO'ya aktar",
+    deleteBelge: 'Belge / taslak sil',
+    manageUsers: 'Kullanıcı yönetimi',
+    editSettings: 'Sunucu / firma ayarları',
+  };
+
+  static String label(String key) => labels[key] ?? key;
+}
+
+/// Kullanıcının effective yetki seti (backend'den gelir). UI gizleme/gösterme için.
+/// NOT: Yalnızca arayüz kısıtlamasıdır; gerçek sınır backend policy'leridir.
 class Permissions {
-  final AppRole role;
-  const Permissions(this.role);
+  final Set<String> _granted;
+  const Permissions(this._granted);
 
-  bool get _isAdmin => role == AppRole.admin;
-  bool get _isPatron => role == AppRole.patron;
-  bool get _isSatisci => role == AppRole.satisci;
+  bool has(String key) => _granted.contains(key);
 
-  /// Şirket raporları (Raporlar sekmesi + Ana sayfa rapor kısayolu).
-  /// Satışçı şirket geneli raporlarını görmez.
-  bool get canViewReports => !_isSatisci;
-
-  /// Finansal raporlar (cari bakiye, vade). Satışçı göremez.
-  bool get canViewFinancialReports => !_isSatisci;
-
-  /// Stok maliyet / alış fiyatı görür. Satışçı göremez.
-  bool get canViewStokCost => !_isSatisci;
-
-  /// Kâr / marj bilgisi görür. Satışçı göremez.
-  bool get canViewProfit => !_isSatisci;
-
-  /// Fatura/sipariş/irsaliye taslağı oluşturabilir. (Tüm roller)
-  bool get canCreateBelge => true;
-
-  /// Belge onaylayabilir. Admin + Patron.
-  bool get canApprove => _isAdmin || _isPatron;
-
-  /// Kullanıcı yönetimi. Admin + Patron.
-  bool get canManageUsers => _isAdmin || _isPatron;
-
-  /// Sunucu/firma ayarlarını uygulama içinden düzenler. Sadece Admin.
-  bool get canEditSettings => _isAdmin;
+  bool get canViewReports => has(Perm.viewReports);
+  bool get canViewFinancialReports => has(Perm.viewFinancialReports);
+  bool get canViewStokCost => has(Perm.viewStokCost);
+  bool get canViewDashboardFinancials => has(Perm.viewDashboardFinancials);
+  bool get canCreateBelge => has(Perm.createBelge);
+  bool get canTransferBelge => has(Perm.transferBelge);
+  bool get canDeleteBelge => has(Perm.deleteBelge);
+  bool get canManageUsers => has(Perm.manageUsers);
+  bool get canEditSettings => has(Perm.editSettings);
 }

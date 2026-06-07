@@ -5,6 +5,7 @@ import '../../core/pdf/belge_onizleme_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../auth/auth_service.dart';
 import '../irsaliye/irsaliye_detay_screen.dart';
 import '../siparis/siparis_detay_screen.dart';
 import 'fatura_form_screen.dart';
@@ -274,7 +275,10 @@ class _FaturaDetayScreenState extends State<FaturaDetayScreen> {
           onPdf: null,
           onShare: null,
           onEdit: () => _editTaslak(t.id!),
-          onTransfer: () => _transferTaslak(t.id!),
+          // "LOGO'ya Aktar" — aktarma yetkisi yoksa gizli.
+          onTransfer: authService.perms.canTransferBelge
+              ? () => _transferTaslak(t.id!)
+              : null,
         ),
         const SizedBox(height: AppSpacing.md),
         _TaslakSatirlarSection(satirlar: t.lines),

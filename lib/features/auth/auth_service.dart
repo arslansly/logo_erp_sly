@@ -16,24 +16,30 @@ class AuthService {
   static const _tokenKey = 'jwt_token';
   static const _userKey = 'user_fullname';
   static const _roleKey = 'user_role';
+  static const _permsKey = 'user_perms';
   static const _expiryKey = 'token_expiry';
 
-  // ─── Rol önbelleği (senkron okuma için) ───
+  // ─── Rol + yetki önbelleği (senkron okuma için) ───
   // login()'de doldurulur; ekranlar (MainShell vb.) build içinde senkron okur.
-  // Henüz yüklenmediyse en kısıtlı rol (satisci) varsayılır.
   AppRole? _cachedRole;
+  Set<String>? _cachedPerms;
 
   /// Aktif kullanıcının rolü (senkron). Yüklenmemişse en az yetkili rol.
   AppRole get role => _cachedRole ?? AppRole.satisci;
 
-  /// Aktif kullanıcının yetki seti (senkron) — UI gizleme/gösterme için.
-  Permissions get perms => Permissions(role);
+  /// Aktif kullanıcının effective yetki seti (senkron) — UI gizleme/gösterme için.
+  /// Yüklenmemişse boş (deny-all); login her zaman doldurur.
+  Permissions get perms => Permissions(_cachedPerms ?? const <String>{});
 
-  /// Depodaki rolü önbelleğe yükler (boot'ta çağrılır). login() zaten doldurur.
+  /// Depodaki rol + yetkileri önbelleğe yükler (boot'ta). login() zaten doldurur.
   Future<void> loadRole() async {
-    final stored = await _storage.read(key: _roleKey);
-    _cachedRole = AppRole.fromString(stored);
+    final storedRole = await _storage.read(key: _roleKey);
+    _cachedRole = AppRole.fromString(storedRole);
+    _cachedPerms = _parsePerms(await _storage.read(key: _permsKey));
   }
+
+  Set<String> _parsePerms(String? csv) =>
+      (csv == null || csv.isEmpty) ? <String>{} : csv.split(',').toSet();
 
   // ─── Login ───
   Future<LoginResponse> login(String username, String password) async {
@@ -63,8 +69,11 @@ class AuthService {
       await _storage.write(
           key: _expiryKey, value: loginResponse.expiresAt.toIso8601String());
 
-      // Rol önbelleğini hemen doldur — MainShell senkron okuyacak.
+      // Rol + yetki önbelleğini hemen doldur — MainShell senkron okuyacak.
       _cachedRole = AppRole.fromString(loginResponse.user.role);
+      _cachedPerms = loginResponse.user.permissions.toSet();
+      await _storage.write(
+          key: _permsKey, value: loginResponse.user.permissions.join(','));
 
       // ApiClient token cache'ini güncelle
       apiClient.clearCachedToken();
@@ -143,6 +152,7 @@ class AuthService {
       await _storage.write(key: SettingsService.donemNoKey, value: donemNo);
     }
     _cachedRole = null;
+    _cachedPerms = null;
     apiClient.clearCachedToken();
   }
 

@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import 'user_model.dart';
+import 'user_permissions_screen.dart';
 import 'user_service.dart';
 
 /// Kullanıcı ekleme/düzenleme formu. [user] null ise yeni kullanıcı.
@@ -157,6 +158,17 @@ class _UserFormScreenState extends State<UserFormScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            // Yetki istisnaları yalnızca mevcut kullanıcıda (kayıt sonrası id gerekir).
+            if (widget.isEdit) ...[
+              _YetkiTile(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => UserPermissionsScreen(user: widget.user!),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
             _FieldLabel(widget.isEdit
                 ? 'Yeni Şifre (boş bırakırsanız değişmez)'
                 : 'Şifre'),
@@ -260,6 +272,52 @@ class _FieldLabel extends StatelessWidget {
         style: AppTypography.bodySmall.copyWith(
           color: AppColors.slate600,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _YetkiTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _YetkiTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.slate200),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: 14),
+          child: Row(
+            children: [
+              const Icon(Icons.tune_rounded, size: 20, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Yetki İstisnaları',
+                        style: AppTypography.body.copyWith(
+                            color: AppColors.slate800,
+                            fontWeight: FontWeight.w600)),
+                    Text('Rol varsayılanını bu kullanıcı için özelleştir',
+                        style: AppTypography.caption
+                            .copyWith(color: AppColors.slate500)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  size: 22, color: AppColors.slate400),
+            ],
+          ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../auth/auth_service.dart';
 import 'siparis_detay_screen.dart';
 import 'siparis_form_screen.dart';
 import 'siparis_model.dart';
@@ -68,20 +69,22 @@ class _SiparisListScreenState extends State<SiparisListScreen>
           const _SiparisListTab(mode: _ListMode.hatali),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.surface,
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SiparisFormScreen()),
-          );
-          if (!mounted) return;
-          setState(() {});
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Yeni Sipariş'),
-      ),
+      floatingActionButton: authService.perms.canCreateBelge
+          ? FloatingActionButton.extended(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.surface,
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SiparisFormScreen()),
+                );
+                if (!mounted) return;
+                setState(() {});
+              },
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Yeni Sipariş'),
+            )
+          : null,
     );
   }
 }
@@ -711,21 +714,25 @@ class _SiparisCard extends StatelessWidget {
                         icon: Icons.edit_rounded,
                         label: 'Düzenle',
                         onTap: onEdit),
-                    const SizedBox(width: AppSpacing.sm),
-                    _ActionBtn(
-                      icon: mode == _ListMode.hatali
-                          ? Icons.refresh_rounded
-                          : Icons.cloud_upload_rounded,
-                      label: mode == _ListMode.hatali ? 'Tekrar Dene' : 'Aktar',
-                      onTap: onTransfer,
-                      primary: true,
-                    ),
+                    if (authService.perms.canTransferBelge) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      _ActionBtn(
+                        icon: mode == _ListMode.hatali
+                            ? Icons.refresh_rounded
+                            : Icons.cloud_upload_rounded,
+                        label:
+                            mode == _ListMode.hatali ? 'Tekrar Dene' : 'Aktar',
+                        onTap: onTransfer,
+                        primary: true,
+                      ),
+                    ],
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded),
-                      color: AppColors.slate400,
-                      onPressed: onDelete,
-                    ),
+                    if (authService.perms.canDeleteBelge)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded),
+                        color: AppColors.slate400,
+                        onPressed: onDelete,
+                      ),
                   ],
                 ),
               ],

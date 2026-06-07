@@ -72,6 +72,30 @@ class UserService {
     }
   }
 
+  // ─── Kullanıcının yetki tablosu (rol varsayılanı + override + effective) ───
+  Future<UserPermissions> getUserPermissions(int id) async {
+    try {
+      final response = await _dio.get('/api/users/$id/permissions');
+      return UserPermissions.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // ─── Kullanıcının yetki istisnalarını (override) topluca kaydet ───
+  // overrides: yalnızca rol varsayılanından FARKLI kararlar (key → granted).
+  Future<void> setUserPermissions(int id, Map<String, bool> overrides) async {
+    try {
+      await _dio.put('/api/users/$id/permissions', data: {
+        'overrides': overrides.entries
+            .map((e) => {'key': e.key, 'granted': e.value})
+            .toList(),
+      });
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException e) {
     // Backend { message } döndürür — varsa onu göster
     final data = e.response?.data;

@@ -82,10 +82,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                _buildHeroCard(),
-                _buildMiniKpis(),
+                // Şirket finansal panelleri (toplam alacak + KPI'lar) — yetkiye bağlı.
+                if (authService.perms.canViewDashboardFinancials) ...[
+                  _buildHeroCard(),
+                  _buildMiniKpis(),
+                ],
                 _buildQuickActions(),
-                // Şirket raporları kısayolu — Satışçı'ya gizli (yetki).
+                // Şirket raporları kısayolu — yetkiye bağlı.
                 if (authService.perms.canViewReports) _buildRaporlarKart(),
                 _buildSonHareketler(),
                 const SizedBox(height: 24),

@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
+import '../auth/auth_service.dart';
 import '../fatura/fatura_form_screen.dart';
 import 'cari_ekstre_screen.dart';
 import 'cari_hareket_model.dart';
@@ -294,8 +295,11 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
                 Expanded(child: _buildActionBtn(Icons.location_on_rounded, 'Yol', _openMap)),
                 const SizedBox(width: 8),
                 Expanded(child: _buildActionBtn(Icons.message_rounded, 'Mesaj', _sendSms)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildActionBtn(Icons.receipt_long_rounded, 'Fatura', _newFatura)),
+                // "Fatura Kes" kısayolu — belge oluşturma yetkisine bağlı.
+                if (authService.perms.canCreateBelge) ...[
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildActionBtn(Icons.receipt_long_rounded, 'Fatura', _newFatura)),
+                ],
               ],
             ),
           ],

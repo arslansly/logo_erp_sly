@@ -1,5 +1,45 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-07 (İnce yetki — hibrit rol + kullanıcı override + admin editörü)
+
+## En son ne yapıldı (2026-06-07 — İnce yetki: hibrit model + admin editörü)
+
+RBAC ① üzerine **ince (modül bazlı) yetki** eklendi. Model = **hibrit**: rol varsayılan yetki setini verir, admin istediği kullanıcıda **tek tek istisna (override)** açar/kapatır. Effective = rol varsayılanı + override. Kapsam AskUserQuestion ile netleşti (hibrit; admin ekranı).
+
+**Yetki kataloğu (9, backend ile birebir):** `view_reports`, `view_financial_reports`, `view_stok_cost`, `view_dashboard_financials`, `create_belge`, `transfer_belge`, `delete_belge`, `manage_users`, `edit_settings`. (Karşılığı henüz olmayan `view_profit`/`approve` eklenmedi — ilgili feature gelince.)
+
+**Backend (`LogoMobileApi`):**
+- YENİ `Services/AppPermissions.cs` — katalog + rol varsayılanları (`DefaultsFor`).
+- YENİ `Scripts/007_UserPermissions.sql` — `dbo.UserPermissions` (UserId, PermissionKey, Granted; PK + FK cascade). LOGOMBL'de çalıştırıldı.
+- `Services/AuthService.cs` — effective hesabı (rol defaults + override); login yanıtı + JWT'ye effective yetkiler; `GetUserPermissionsAsync` (default/override/effective) + `SetUserPermissionsAsync` (override'ları temizleyip yazar, varsayılana eşit override saklanmaz). **Son-yönetici koruması artık effective `manage_users` bazlı** (rol değişimi VE override kapatma kapsanır).
+- `Services/JwtTokenService.cs` — effective yetkiler `perm` claim'leri olarak gömülür.
+- `Program.cs` — her yetki için `RequireClaim("perm", key)` policy'si.
+- `Controllers/UsersController.cs` — `[Authorize(Policy=manage_users)]` + `GET/PUT /api/users/{id}/permissions`.
+- `Controllers/RaporController.cs` — finansal uçlar `[Authorize(Policy=view_financial_reports)]`.
+- `Models/LoginResponse.cs` — `AppUserInfo.Permissions` (string[]).
+
+**Frontend (`logo_mobil`):**
+- `core/auth/app_role.dart` — `Perm` kataloğu (anahtar + Türkçe etiket) + `Permissions` artık **string-key set** (eski named getter'lar korundu; yeni: `canViewDashboardFinancials`, `canTransferBelge`, `canDeleteBelge`).
+- `auth_model` — `UserInfo.permissions`; `auth_service` — yetki seti senkron cache (login parse + storage `user_perms`, boot `loadRole`, logout temizle). Yüklenmemişse deny-all.
+- Yeni gating noktaları: dashboard finansal panelleri (hero + mini KPI), belge **FAB** (create), taslak **Aktar** (transfer) + **Sil** (delete) — fatura/sipariş/irsaliye listeleri + fatura detay Aktar, cari detay "Fatura" kısayolu (create).
+- Admin editörü: YENİ `users/user_permissions_screen.dart` (tri-state **Varsayılan/Aç/Kapat** + effective göstergesi); `user_form` (düzenleme) → "Yetki İstisnaları" girişi; `user_service` GET/PUT permissions; `user_model` `PermissionItem`/`UserPermissions`.
+
+> **Kilitlenme düzeltmesi (bu turda):** admin rolü yanlışlıkla Satışçı'ya düşürülünce kimse Kullanıcı Yönetimi'ne erişemiyordu → DB'den admin (Id 2) tekrar `Admin` yapıldı + "son yönetici" koruması eklendi (effective `manage_users` bazlı; son yöneticinin rolü/erişimi kaldırılamaz).
+
+**Doğrulama:** `flutter analyze` (tüm değişen dosyalar) → **0 issue**. Backend `dotnet build` → **0 uyarı / 0 hata**. `007` SQL çalıştırıldı.
+
+**Test adımları:**
+1. **SQL:** `007_UserPermissions.sql` LOGOMBL'de bir kez (çalıştırıldı). **Backend restart** (policy + perm claim + yeni endpoint'ler).
+2. **Yeniden login** — token'a artık effective yetkiler gömülüyor (eski token'da yok).
+3. Admin → Kullanıcı Yönetimi → bir Satışçı'yı düzenle → **Yetki İstisnaları** → "Raporlar = Aç" → Kaydet. O satışçıyla login → Raporlar sekmesi görünür.
+4. Satışçı'da `create_belge` varsayılan açık → "Yeni Fatura" FAB görünür; transfer/delete kapalı → taslakta Aktar/Sil yok.
+5. Son yönetici koruması: tek Admin/Patron'un `manage_users`'ını Kapat → backend **409**, net mesaj.
+6. Backend: Satışçı token'ıyla `/api/rapor/cari-bakiye` → **403**; override ile açılırsa (yeni login sonrası) 200.
+
+**Sıradaki bloklar:** ② Patron paneli, ③ Satışçı saha, ④ Raporlar genişletme, ⑤ Demo cilası; en son (satış sonrası) altyapı & güvenlik.
+
+---
+
 Son güncelleme: 2026-06-07 (Rol bazlı yetki sistemi — RBAC, Blok ①)
 
 ## En son ne yapıldı (2026-06-07 — Rol bazlı yetki sistemi / RBAC, Blok ①)

@@ -36,3 +36,46 @@ class AppUser {
     );
   }
 }
+
+/// Bir kullanıcının tek bir yetki satırı (admin yetki editörü).
+/// default = rol varsayılanı, overrideValue = kişiye özel istisna (null = yok),
+/// effective = sonuç (override ?? default).
+class PermissionItem {
+  final String key;
+  final bool defaultGranted;
+  final bool? overrideValue;
+  final bool effective;
+
+  PermissionItem({
+    required this.key,
+    required this.defaultGranted,
+    required this.overrideValue,
+    required this.effective,
+  });
+
+  factory PermissionItem.fromJson(Map<String, dynamic> json) {
+    return PermissionItem(
+      key: json['key'] as String? ?? '',
+      defaultGranted: json['default'] as bool? ?? false,
+      overrideValue: json['override'] as bool?,
+      effective: json['effective'] as bool? ?? false,
+    );
+  }
+}
+
+/// Kullanıcının yetki tablosu (rol + satırlar).
+class UserPermissions {
+  final String role;
+  final List<PermissionItem> items;
+
+  UserPermissions({required this.role, required this.items});
+
+  factory UserPermissions.fromJson(Map<String, dynamic> json) {
+    return UserPermissions(
+      role: json['role'] as String? ?? '',
+      items: (json['items'] as List<dynamic>? ?? [])
+          .map((e) => PermissionItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
