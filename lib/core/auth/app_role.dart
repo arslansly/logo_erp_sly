@@ -92,6 +92,7 @@ class Perm {
   static const viewFinancialReports = 'view_financial_reports';
   static const viewStokCost = 'view_stok_cost';
   static const viewDashboardFinancials = 'view_dashboard_financials';
+  static const viewPatronPanel = 'view_patron_panel';
   static const createBelge = 'create_belge';
   static const transferBelge = 'transfer_belge';
   static const deleteBelge = 'delete_belge';
@@ -104,6 +105,7 @@ class Perm {
     viewFinancialReports,
     viewStokCost,
     viewDashboardFinancials,
+    viewPatronPanel,
     createBelge,
     transferBelge,
     deleteBelge,
@@ -117,6 +119,7 @@ class Perm {
     viewFinancialReports: 'Finansal rapor (cari bakiye, vade)',
     viewStokCost: 'Stok maliyet / alış fiyatı',
     viewDashboardFinancials: 'Ana sayfa finansalları',
+    viewPatronPanel: 'Patron paneli (nakit, çek-senet, yaşlandırma)',
     createBelge: 'Belge oluştur (fatura/sipariş/irsaliye)',
     transferBelge: "Belgeyi LOGO'ya aktar",
     deleteBelge: 'Belge / taslak sil',
@@ -139,6 +142,7 @@ class Permissions {
   bool get canViewFinancialReports => has(Perm.viewFinancialReports);
   bool get canViewStokCost => has(Perm.viewStokCost);
   bool get canViewDashboardFinancials => has(Perm.viewDashboardFinancials);
+  bool get canViewPatronPanel => has(Perm.viewPatronPanel);
   bool get canCreateBelge => has(Perm.createBelge);
   bool get canTransferBelge => has(Perm.transferBelge);
   bool get canDeleteBelge => has(Perm.deleteBelge);

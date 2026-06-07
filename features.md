@@ -1,5 +1,46 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-07 (Patron paneli — Blok ②: net alacak-borç + yaşlandırma, nakit/banka, çek-senet, gerçek trend)
+
+## En son ne yapıldı (2026-06-07 — Patron paneli, Blok ②)
+
+Ürünleştirme yol haritasının **② Patron paneli** bloğu. Patron/Muhasebe/Admin'e özel, yetkiye bağlı yeni **"Patron" sekmesi**. Kapsam AskUserQuestion ile netleşti (yeni gated sekme; bu tur: net alacak-borç + yaşlandırma, nakit/banka, çek-senet, gerçek trend — **Onaylar ayrı bloğa** bırakıldı).
+
+**LOGO DB keşfi (read-only, firma 126 / dönem 01'de canlı doğrulandı — referans dokümanda yoktu):**
+- **Banka:** bakiye = `LG_{F}_{D}_GNTOTBN`(TOTTYP=−1) ⋈ `LG_{F}_BNCARD`(ACTIVE=0) → `SUM(DEBIT−CREDIT)`. ⚠ Join şart: join'siz toplamda junk satırlar var (−204M). Doğrulanan: ~19.2M (8 hesap).
+- **Kasa:** `LG_{F}_{D}_GNTOTCSH`(kolon adı **TOTTYPE**) ⋈ `LG_{F}_KSCARD`. Bu firmada **kasa tanımlı değil** (0 kart) → UI "Tanımlı değil".
+- **Çek/senet:** `LG_{F}_{D}_CSCARD`. `DOC` 1=müşteri çeki(alacak)/2=müşteri senedi/3=kendi çekimiz(borç)/4=kendi senedimiz. **Bekleyen = `CANCELLED=0 AND CURRSTAT NOT IN (2,6,8)`** (2=cirolandı, 6=karşılıksız, 8=tahsil/ödendi → terminal). Karşılıksız (CURRSTAT=6) ayrı kırmızı bayrak. (`SETDATE` güvenilir kapanış sinyali değil — kullanılmadı.)
+- **Net alacak-borç:** `LV_{F}_{D}_GNTOTCL`(TOTTYP=1) per-cari `SUM(DEBIT−CREDIT)`; +bakiye=alacak, −bakiye=borç. **Mevcut dashboard "Toplam alacak" hero'su aslında NET'ti (159M); patron panelinde alacak/borç ayrıldı.**
+- **Trend:** `LG_{F}_{D}_CLFLINE` bu ay net hareket / ay başı baz. Veri yoksa **null → rozet gizlenir** (hardcoded `%4,2` kaldırıldı).
+
+**Yeni yetki:** `view_patron_panel` (iki katalog senkron) — Admin/Patron/Muhasebe varsayılan açık, Satışçı kapalı. Admin editöründe otomatik görünür/düzenlenebilir.
+
+**Backend (`LogoMobileApi`):**
+- `Services/AppPermissions.cs` — `ViewPatronPanel` (`All` + `DefaultsFor`: Admin/Patron/Muhasebe).
+- YENİ `Models/PatronOzet.cs` (`PatronOzet` + `BankaHesap` + `CekKayit`).
+- YENİ `Services/PatronService.cs` — `GetOzetAsync` (6 bölüm, her biri try/catch), `GetBankaHesaplarAsync`, `GetCeklerAsync(tip)`.
+- YENİ `Controllers/PatronController.cs` — `[Authorize(Policy=view_patron_panel)]`; `GET /api/patron/ozet|banka-hesaplar|cekler?tip=tahsil|odeme`.
+- `Program.cs` — `PatronService` DI. `Models/DashboardOzet.cs` + `Services/DashboardService.cs` — gerçek `TrendYuzde` (hero için).
+
+**Frontend (`logo_mobil`):**
+- `core/auth/app_role.dart` — `Perm.viewPatronPanel` + etiket + `canViewPatronPanel`.
+- YENİ `features/patron/` — `patron_model.dart`, `patron_service.dart`, `patron_screen.dart` (net hero + yaşlandırma barları + nakit/banka + çek-senet kartları, shimmer skeleton, hata/boş durum, bakiye gizleme), `banka_hesaplar_screen.dart`, `cekler_screen.dart` (tahsil/ödeme toggle).
+- `shell/main_shell.dart` — gated "Patron" sekmesi (`Icons.insights_rounded`).
+- `dashboard_screen.dart` — hardcoded `%4,2` → gerçek trend rozeti (`_buildTrendRow`, veri yoksa gizli, +/− yön+renk).
+
+**Doğrulama:** Backend `dotnet build` → **0 uyarı / 0 hata**. `flutter analyze` (patron/dashboard/shell/auth) → **0 issue**. 5 metriğin SQL'i gerçek DB'de çalıştırılıp makullük doğrulandı.
+
+**Test adımları:**
+1. **Backend restart** (yeni policy + endpoint'ler). **Yeniden login** (token'a `view_patron_panel` gömülsün).
+2. Patron/Muhasebe/Admin ile login → alt navigasyonda **"Patron"** sekmesi görünür; Satışçı'da görünmez.
+3. Panel: Net bakiye + alacak/borç ayrımı; yaşlandırma 4 kova (90+ baskın); Banka kartına dokun → hesap listesi; Kasa "Tanımlı değil"; Çek "Tahsil edilecek/Ödenecek" → liste (tahsil/ödeme toggle); karşılıksız çek varsa kırmızı bayrak.
+4. Bakiye gizleme (göz ikonu) → tüm tutarlar maskelenir.
+5. Dashboard hero: stale DB'de trend rozeti **görünmez** (canlı veride gerçek %).
+
+**Sıradaki bloklar:** ② Patron paneli — **Onaylar** (taslak onay iş akışı, kalan parça), ③ Satışçı saha, ④ Raporlar genişletme, ⑤ Demo cilası; en son (satış sonrası) altyapı & güvenlik.
+
+---
+
 Son güncelleme: 2026-06-07 (İnce yetki — hibrit rol + kullanıcı override + admin editörü)
 
 ## En son ne yapıldı (2026-06-07 — İnce yetki: hibrit model + admin editörü)

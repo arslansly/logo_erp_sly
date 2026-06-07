@@ -7,6 +7,7 @@ import '../belgeler/belgeler_screen.dart';
 import '../cari/cari_list_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../malzeme/malzeme_list_screen.dart';
+import '../patron/patron_screen.dart';
 import '../profil/profil_screen.dart';
 import '../rapor/rapor_hub_screen.dart';
 
@@ -41,6 +42,9 @@ class _MainShellState extends State<MainShell> {
       const _TabDef(Icons.people_rounded, 'Cariler', CariListScreen()),
       const _TabDef(Icons.inventory_2_rounded, 'Stok', MalzemeListScreen()),
       const _TabDef(Icons.folder_rounded, 'Belgeler', BelgelerScreen()),
+      // Patron paneli — yetkiye bağlı (Patron/Muhasebe/Admin varsayılan).
+      if (perms.canViewPatronPanel)
+        const _TabDef(Icons.insights_rounded, 'Patron', PatronScreen()),
       if (perms.canViewReports)
         const _TabDef(Icons.bar_chart_rounded, 'Raporlar', RaporHubScreen()),
       const _TabDef(Icons.person_rounded, 'Profil', ProfilScreen()),

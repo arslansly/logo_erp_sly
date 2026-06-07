@@ -438,46 +438,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 letterSpacing: _hideBalance ? 4 : -0.8,
               ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.liveGreen.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.trending_up_rounded,
-                          color: AppColors.liveGreen, size: 14),
-                      const SizedBox(width: 3),
-                      Text(
-                        '%4,2',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.liveGreen,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Geçen aya göre',
-                  style: AppTypography.caption.copyWith(
-                    color: Colors.white60,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
+            // Gerçek trend — backend'den (geçen aya göre net değişim).
+            // Veri yoksa (trendYuzde == null) rozet hiç gösterilmez.
+            if (!_isLoading && _ozet?.trendYuzde != null) ...[
+              const SizedBox(height: 14),
+              _buildTrendRow(_ozet!.trendYuzde!),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  // ─── Gerçek trend rozeti (hero içinde) ───
+  Widget _buildTrendRow(double trend) {
+    final up = trend >= 0;
+    final color = up ? AppColors.liveGreen : AppColors.pinkLight;
+    final pct = trend.abs().toStringAsFixed(1).replaceAll('.', ',');
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                up ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                color: color,
+                size: 14,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '%$pct',
+                style: AppTypography.caption.copyWith(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Geçen aya göre',
+          style: AppTypography.caption.copyWith(
+            color: Colors.white60,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 

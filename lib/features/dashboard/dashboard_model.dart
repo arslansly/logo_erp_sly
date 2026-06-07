@@ -4,11 +4,16 @@ class DashboardOzet {
   final double bugunTahsilat;
   final int vadesiGecenCariSayisi;
 
+  /// Gerçek trend — geçen aya göre net değişim yüzdesi.
+  /// null = veri yok / hesaplanamadı → UI rozeti gizler (sahte yüzde göstermez).
+  final double? trendYuzde;
+
   DashboardOzet({
     required this.toplamAlacak,
     required this.vadesiGecen,
     required this.bugunTahsilat,
     required this.vadesiGecenCariSayisi,
+    this.trendYuzde,
   });
 
   factory DashboardOzet.fromJson(Map<String, dynamic> json) {
@@ -17,6 +22,7 @@ class DashboardOzet {
       vadesiGecen: (json['vadesiGecen'] as num?)?.toDouble() ?? 0.0,
       bugunTahsilat: (json['bugunTahsilat'] as num?)?.toDouble() ?? 0.0,
       vadesiGecenCariSayisi: (json['vadesiGecenCariSayisi'] as int?) ?? 0,
+      trendYuzde: (json['trendYuzde'] as num?)?.toDouble(),
     );
   }
 
@@ -25,6 +31,7 @@ class DashboardOzet {
     vadesiGecen: 0,
     bugunTahsilat: 0,
     vadesiGecenCariSayisi: 0,
+    trendYuzde: null,
   );
 }
 
