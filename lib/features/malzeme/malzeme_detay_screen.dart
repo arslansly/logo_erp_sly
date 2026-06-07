@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../auth/auth_service.dart';
 import 'malzeme_hareket_screen.dart';
 import 'malzeme_image.dart';
 import 'malzeme_model.dart';
@@ -156,9 +157,11 @@ class _MalzemeDetayScreenState extends State<MalzemeDetayScreen> {
   }
 
   Widget _buildContent(MalzemeDetay d) {
-    final hasFiyat = d.satinalmaFiyati > 0 ||
+    // Satışçı maliyet (satınalma / son alış) fiyatlarını görmez — yalnızca satış.
+    final showCost = authService.perms.canViewStokCost;
+    final hasFiyat = (showCost &&
+            (d.satinalmaFiyati > 0 || d.sonAlisFiyati > 0)) ||
         d.satisFiyati > 0 ||
-        d.sonAlisFiyati > 0 ||
         d.sonSatisFiyati > 0;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -168,7 +171,7 @@ class _MalzemeDetayScreenState extends State<MalzemeDetayScreen> {
         _StokOzetCard(detay: d),
         if (hasFiyat) ...[
           const SizedBox(height: 16),
-          _FiyatSection(detay: d),
+          _FiyatSection(detay: d, showCost: showCost),
         ],
         if (d.ambarStoklar.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -471,13 +474,46 @@ class _AmbarSatir extends StatelessWidget {
 
 class _FiyatSection extends StatelessWidget {
   final MalzemeDetay detay;
-  const _FiyatSection({required this.detay});
+  // Satınalma/maliyet fiyatları gösterilsin mi (Satışçı'ya gizli).
+  final bool showCost;
+  const _FiyatSection({required this.detay, required this.showCost});
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.decimalPattern('tr_TR');
 
     String f(double v) => fmt.format(v);
+
+    final satirlar = <Widget>[
+      if (showCost && detay.satinalmaFiyati > 0)
+        _FiyatSatir(
+          label: 'Satınalma (Tanımlı)',
+          ikon: Icons.shopping_cart_outlined,
+          deger: '${f(detay.satinalmaFiyati)} ${detay.satinalmaDoviz}',
+          renk: AppColors.slate800,
+        ),
+      if (detay.satisFiyati > 0)
+        _FiyatSatir(
+          label: 'Satış (Tanımlı)',
+          ikon: Icons.sell_outlined,
+          deger: '${f(detay.satisFiyati)} ${detay.satisDoviz}',
+          renk: AppColors.slate800,
+        ),
+      if (showCost && detay.sonAlisFiyati > 0)
+        _FiyatSatir(
+          label: 'Son Satınalma',
+          ikon: Icons.history_rounded,
+          deger: f(detay.sonAlisFiyati),
+          renk: AppColors.accent,
+        ),
+      if (detay.sonSatisFiyati > 0)
+        _FiyatSatir(
+          label: 'Son Satış',
+          ikon: Icons.history_rounded,
+          deger: f(detay.sonSatisFiyati),
+          renk: AppColors.positive,
+        ),
+    ];
 
     return Container(
       decoration: BoxDecoration(
@@ -493,40 +529,12 @@ class _FiyatSection extends StatelessWidget {
             child: Text('Fiyatlar',
                 style: AppTypography.h3.copyWith(color: AppColors.slate700)),
           ),
-          const Divider(height: 1, color: AppColors.slate200),
-          if (detay.satinalmaFiyati > 0)
-            _FiyatSatir(
-              label: 'Satınalma (Tanımlı)',
-              ikon: Icons.shopping_cart_outlined,
-              deger: '${f(detay.satinalmaFiyati)} ${detay.satinalmaDoviz}',
-              renk: AppColors.slate800,
-            ),
-          if (detay.satisFiyati > 0) ...[
-            const Divider(height: 1, color: AppColors.slate200, indent: 52),
-            _FiyatSatir(
-              label: 'Satış (Tanımlı)',
-              ikon: Icons.sell_outlined,
-              deger: '${f(detay.satisFiyati)} ${detay.satisDoviz}',
-              renk: AppColors.slate800,
-            ),
-          ],
-          if (detay.sonAlisFiyati > 0) ...[
-            const Divider(height: 1, color: AppColors.slate200, indent: 52),
-            _FiyatSatir(
-              label: 'Son Satınalma',
-              ikon: Icons.history_rounded,
-              deger: f(detay.sonAlisFiyati),
-              renk: AppColors.accent,
-            ),
-          ],
-          if (detay.sonSatisFiyati > 0) ...[
-            const Divider(height: 1, color: AppColors.slate200, indent: 52),
-            _FiyatSatir(
-              label: 'Son Satış',
-              ikon: Icons.history_rounded,
-              deger: f(detay.sonSatisFiyati),
-              renk: AppColors.positive,
-            ),
+          for (var i = 0; i < satirlar.length; i++) ...[
+            Divider(
+                height: 1,
+                color: AppColors.slate200,
+                indent: i == 0 ? 0 : 52),
+            satirlar[i],
           ],
         ],
       ),

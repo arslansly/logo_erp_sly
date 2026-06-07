@@ -14,7 +14,6 @@ class ProfilScreen extends StatefulWidget {
 
 class _ProfilScreenState extends State<ProfilScreen> {
   String? _fullName;
-  bool _isAdmin = false;
   bool _isLoggingOut = false;
 
   @override
@@ -25,11 +24,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
   Future<void> _loadUser() async {
     final name = await authService.getUserName();
-    final admin = await authService.isAdmin();
     if (mounted) {
       setState(() {
         _fullName = name;
-        _isAdmin = admin;
       });
     }
   }
@@ -64,9 +61,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           const SizedBox(height: 8),
-          _UserCard(fullName: _fullName),
+          _UserCard(fullName: _fullName, roleLabel: authService.role.label),
           const SizedBox(height: 24),
-          if (_isAdmin) ...[
+          // Kullanıcı yönetimi yalnızca Admin + Patron'a görünür.
+          if (authService.perms.canManageUsers) ...[
             _AdminSection(onUserManagement: _openUserManagement),
             const SizedBox(height: 24),
           ],
@@ -81,7 +79,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
 class _UserCard extends StatelessWidget {
   final String? fullName;
-  const _UserCard({required this.fullName});
+  final String roleLabel;
+  const _UserCard({required this.fullName, required this.roleLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +117,7 @@ class _UserCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Kullanıcı',
+                  roleLabel,
                   style: AppTypography.bodySmall.copyWith(
                     color: Colors.white.withValues(alpha: 0.75),
                   ),

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/api/api_client.dart';
+import '../../core/auth/app_role.dart';
 import '../settings/settings_service.dart';
 import 'auth_model.dart';
 
@@ -16,6 +17,23 @@ class AuthService {
   static const _userKey = 'user_fullname';
   static const _roleKey = 'user_role';
   static const _expiryKey = 'token_expiry';
+
+  // ─── Rol önbelleği (senkron okuma için) ───
+  // login()'de doldurulur; ekranlar (MainShell vb.) build içinde senkron okur.
+  // Henüz yüklenmediyse en kısıtlı rol (satisci) varsayılır.
+  AppRole? _cachedRole;
+
+  /// Aktif kullanıcının rolü (senkron). Yüklenmemişse en az yetkili rol.
+  AppRole get role => _cachedRole ?? AppRole.satisci;
+
+  /// Aktif kullanıcının yetki seti (senkron) — UI gizleme/gösterme için.
+  Permissions get perms => Permissions(role);
+
+  /// Depodaki rolü önbelleğe yükler (boot'ta çağrılır). login() zaten doldurur.
+  Future<void> loadRole() async {
+    final stored = await _storage.read(key: _roleKey);
+    _cachedRole = AppRole.fromString(stored);
+  }
 
   // ─── Login ───
   Future<LoginResponse> login(String username, String password) async {
@@ -44,6 +62,9 @@ class AuthService {
       await _storage.write(key: _roleKey, value: loginResponse.user.role);
       await _storage.write(
           key: _expiryKey, value: loginResponse.expiresAt.toIso8601String());
+
+      // Rol önbelleğini hemen doldur — MainShell senkron okuyacak.
+      _cachedRole = AppRole.fromString(loginResponse.user.role);
 
       // ApiClient token cache'ini güncelle
       apiClient.clearCachedToken();
@@ -121,6 +142,7 @@ class AuthService {
     if (donemNo != null) {
       await _storage.write(key: SettingsService.donemNoKey, value: donemNo);
     }
+    _cachedRole = null;
     apiClient.clearCachedToken();
   }
 

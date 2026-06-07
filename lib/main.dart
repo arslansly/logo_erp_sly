@@ -35,6 +35,13 @@ void main() async {
     debugPrint('getToken hatası: $e\n$s');
   }
 
+  // Kayıtlı rolü önbelleğe al (yetki kontrolleri senkron okur)
+  try {
+    await authService.loadRole();
+  } catch (e, s) {
+    debugPrint('loadRole hatası: $e\n$s');
+  }
+
   // 401 yakalandığında login'e yönlendir
   ApiClient.setOn401Callback(() {
     authService.logout();

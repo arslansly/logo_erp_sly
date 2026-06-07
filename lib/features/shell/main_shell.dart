@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/app_role.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../auth/auth_service.dart';
 import '../belgeler/belgeler_screen.dart';
 import '../cari/cari_list_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../malzeme/malzeme_list_screen.dart';
 import '../profil/profil_screen.dart';
 import '../rapor/rapor_hub_screen.dart';
+
+/// Alt sekme tanımı — yetkiye göre dinamik kurulur.
+class _TabDef {
+  final IconData icon;
+  final String label;
+  final Widget screen;
+  const _TabDef(this.icon, this.label, this.screen);
+}
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -18,14 +28,24 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    CariListScreen(),
-    MalzemeListScreen(),
-    BelgelerScreen(),
-    RaporHubScreen(),
-    ProfilScreen(),
-  ];
+  // Sekmeler aktif kullanıcının yetkisine göre kurulur.
+  // Satışçı şirket raporlarını görmediği için Raporlar sekmesi gizlenir.
+  late final List<_TabDef> _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    final Permissions perms = authService.perms;
+    _tabs = [
+      const _TabDef(Icons.home_rounded, 'Ana', DashboardScreen()),
+      const _TabDef(Icons.people_rounded, 'Cariler', CariListScreen()),
+      const _TabDef(Icons.inventory_2_rounded, 'Stok', MalzemeListScreen()),
+      const _TabDef(Icons.folder_rounded, 'Belgeler', BelgelerScreen()),
+      if (perms.canViewReports)
+        const _TabDef(Icons.bar_chart_rounded, 'Raporlar', RaporHubScreen()),
+      const _TabDef(Icons.person_rounded, 'Profil', ProfilScreen()),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +54,7 @@ class _MainShellState extends State<MainShell> {
       child: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
-          children: _screens,
+          children: [for (final t in _tabs) t.screen],
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -53,12 +73,8 @@ class _MainShellState extends State<MainShell> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildTab(0, Icons.home_rounded, 'Ana'),
-                  _buildTab(1, Icons.people_rounded, 'Cariler'),
-                  _buildTab(2, Icons.inventory_2_rounded, 'Stok'),
-                  _buildTab(3, Icons.folder_rounded, 'Belgeler'),
-                  _buildTab(4, Icons.bar_chart_rounded, 'Raporlar'),
-                  _buildTab(5, Icons.person_rounded, 'Profil'),
+                  for (int i = 0; i < _tabs.length; i++)
+                    _buildTab(i, _tabs[i].icon, _tabs[i].label),
                 ],
               ),
             ),

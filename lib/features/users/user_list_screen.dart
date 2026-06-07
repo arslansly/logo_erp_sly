@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/app_role.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -122,7 +123,7 @@ class _UserListScreenState extends State<UserListScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.md),
         itemCount: _users.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (_, i) => _UserTile(
           user: _users[i],
           onTap: () => _openForm(user: _users[i]),
@@ -136,8 +137,8 @@ class _UserListScreenState extends State<UserListScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: 6,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-      itemBuilder: (_, __) => Container(
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+      itemBuilder: (_, _) => Container(
         height: 72,
         decoration: BoxDecoration(
           color: AppColors.slate100,
@@ -207,7 +208,7 @@ class _UserTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = user.role.toLowerCase() == 'admin';
+    final role = AppRole.fromString(user.role);
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(14),
@@ -252,10 +253,8 @@ class _UserTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (isAdmin) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          _RoleBadge(),
-                        ],
+                        const SizedBox(width: AppSpacing.sm),
+                        _RoleBadge(role: role),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -284,18 +283,34 @@ class _UserTile extends StatelessWidget {
 }
 
 class _RoleBadge extends StatelessWidget {
+  final AppRole role;
+  const _RoleBadge({required this.role});
+
+  Color get _color {
+    switch (role) {
+      case AppRole.admin:
+        return AppColors.violet;
+      case AppRole.patron:
+        return AppColors.accentDark;
+      case AppRole.muhasebe:
+        return AppColors.cyan;
+      case AppRole.satisci:
+        return AppColors.warning;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.12),
+        color: _color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        'Admin',
+        role.label,
         style: AppTypography.caption.copyWith(
-          color: AppColors.accentDark,
+          color: _color,
           fontWeight: FontWeight.w600,
           fontSize: 10,
         ),

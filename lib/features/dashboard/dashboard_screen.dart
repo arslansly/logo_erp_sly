@@ -85,7 +85,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildHeroCard(),
                 _buildMiniKpis(),
                 _buildQuickActions(),
-                _buildRaporlarKart(),
+                // Şirket raporları kısayolu — Satışçı'ya gizli (yetki).
+                if (authService.perms.canViewReports) _buildRaporlarKart(),
                 _buildSonHareketler(),
                 const SizedBox(height: 24),
               ],

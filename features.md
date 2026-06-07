@@ -1,5 +1,50 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-07 (Rol bazlı yetki sistemi — RBAC, Blok ①)
+
+## En son ne yapıldı (2026-06-07 — Rol bazlı yetki sistemi / RBAC, Blok ①)
+
+Ürünleştirme stratejisi netleşti: program patronlara **"bitmiş ürün"** gibi gösterilecek; altyapı/yayınlama/güvenlik (hosting, lisans vb.) satış kararına bırakıldı. İlk blok **yetki sistemi**. Roller artık `Admin`/`User` yerine **4 hazır rol**: Admin (Yönetici), Patron, Muhasebe, Satışçı — her birinin sabit yetki seti. Kapsam AskUserQuestion ile netleşti (hazır roller; ilk blok = yetki).
+
+**Yetki matrisi (özet):**
+- **Satışçı** — şirket raporları yok, stok **maliyet**/kâr yok, kullanıcı yönetimi yok (belge oluşturabilir).
+- **Muhasebe** — finansal görünüm var, kullanıcı yönetimi yok.
+- **Patron** — tüm finansal + onay + kullanıcı yönetimi (sunucu/firma ayarı yok).
+- **Admin** — her şey + ayarlar.
+
+**Frontend (`logo_mobil`)** — YENİ `lib/core/auth/app_role.dart`: `AppRole` enum (admin/patron/muhasebe/satisci) + `Permissions` sınıfı (**tek doğruluk kaynağı**: `canViewReports`, `canViewFinancialReports`, `canViewStokCost`, `canViewProfit`, `canCreateBelge`, `canApprove`, `canManageUsers`, `canEditSettings`). `AppRole.fromString` bilinmeyen/eski "User" → satisci (en az yetki, güvenli varsayılan).
+- `auth_service.dart` — senkron rol önbelleği (`role`/`perms`); login'de doldurulur, logout'ta temizlenir, boot'ta `loadRole()` (`main.dart`). Mevcut `isAdmin()` korundu.
+- `main_shell.dart` — alt sekmeler yetkiye göre **dinamik**; Satışçı'da **Raporlar sekmesi gizli** (sabit 6 sekme → filtreli liste, IndexedStack uyumlu).
+- `dashboard_screen.dart` — Raporlar kısayol kartı `canViewReports`'a bağlı.
+- `profil_screen.dart` — "Kullanıcı Yönetimi" girişi `canManageUsers`'a bağlı (eski `isAdmin` yerine); kullanıcı kartında **rol etiketi** gösterilir.
+- `malzeme_detay_screen.dart` — "Fiyatlar" bölümünde **satınalma + son alış (maliyet)** Satışçı'ya gizli, **satış** fiyatları herkese açık (fiyat bölümü liste tabanlı yeniden kuruldu; divider düzeni korundu, boş bölüm oluşmaz).
+- `user_form_screen.dart` — rol dropdown'ı 2 değer → **4 rol** + seçili rolün açıklaması; yeni kullanıcı varsayılanı Satışçı (en az yetki).
+- `user_list_screen.dart` — rol rozeti 4 role göre etiket/renk (artık sadece Admin için değil).
+- **Not:** `canCreateBelge` 4 rolde de `true` olduğu için belge FAB'larına koşul eklenmedi (ölü koddan kaçınıldı); yetki noktası `Permissions`'ta hazır, kısıtlı rol gelince tek satırla bağlanır.
+
+**Backend (`LogoMobileApi`)** — YENİ `Services/RoleHelper.cs`: kanonik roller (Admin/Patron/Muhasebe/Satisci, Flutter ile ASCII eşli) + `Normalize` (geçersiz/eski rol → Satisci).
+- `Services/AuthService.cs` — create/update'te rol `RoleHelper.Normalize` ile doğrulanır (create varsayılanı da Satisci).
+- `Controllers/UsersController.cs` — `[Authorize(Roles="Admin,Patron")]`.
+- `Controllers/RaporController.cs` — finansal uçlar (`cari-bakiye`, `vade`) `[Authorize(Roles="Admin,Patron,Muhasebe")]` (Satışçı 403); stok raporları tüm rollere açık.
+- JWT zaten `ClaimTypes.Role` gömüyor; şifreler BCrypt.
+- **Bilinen (M-Güvenlik'e bırakıldı):** `MalzemeController` detayında maliyet alanlarını Satışçı için backend'de maskeleme henüz yok (UI gizliyor); tam alan-bazlı maskeleme güvenlik fazında.
+
+**Doğrulama:** `flutter analyze` (9 değişen dosya) → **0 issue**. Backend `dotnet build` → **0 uyarı / 0 hata**.
+
+**Test adımları:**
+1. **Backend restart** (UsersController/RaporController guard + RoleHelper). Mevcut "User" rollü kullanıcılar artık Satışçı yetkisinde görünür.
+2. Admin ile gir → Profil > Kullanıcı Yönetimi → her rolden birer kullanıcı oluştur (rol dropdown 4 değer + açıklama).
+3. **Satışçı** ile gir → alt barda **Raporlar yok**, Ana sayfada rapor kartı yok, Profil'de Kullanıcı Yönetimi yok, stok detayında maliyet/son alış yok (satış fiyatı var).
+4. **Muhasebe** → Raporlar var (finansal dahil), Kullanıcı Yönetimi yok.
+5. **Patron** → her şey + Kullanıcı Yönetimi. **Admin** → + ayarlar.
+6. Backend: Satışçı token'ıyla `/api/users` → **403**; `/api/rapor/cari-bakiye` ve `/vade` → **403**; `/api/rapor/stok` → 200.
+
+> Demo anlatısı: aynı cihazda Satışçı → çıkış → Patron girişi ile uygulamanın **kılık değiştirmesi** — "rol bazlı, kurumsal" hissini tek hamlede verir.
+
+**Sıradaki bloklar:** ② Patron paneli (gerçek nakit/alacak-borç/çek-senet + sahte trend temizliği), ③ Satışçı saha, ④ Raporlar genişletme, ⑤ Demo cilası; **en son** (satış kararından sonra) altyapı & güvenlik.
+
+---
+
 Son güncelleme: 2026-06-03 (Yapay zeka asistanı — doğal dil komutları)
 
 ## En son ne yapıldı (2026-06-03 — Yapay zeka asistanı, Faz 1)

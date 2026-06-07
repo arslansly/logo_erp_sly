@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/app_role.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -23,12 +24,11 @@ class _UserFormScreenState extends State<UserFormScreen> {
   late final TextEditingController _emailCtrl;
   final _passwordCtrl = TextEditingController();
 
-  String _role = 'User';
+  // Yeni kullanıcı varsayılanı en az yetkili rol (güvenli).
+  String _role = AppRole.satisci.value;
   bool _isActive = true;
   bool _saving = false;
   String? _error;
-
-  static const _roles = ['User', 'Admin'];
 
   @override
   void initState() {
@@ -37,7 +37,10 @@ class _UserFormScreenState extends State<UserFormScreen> {
     _usernameCtrl = TextEditingController(text: u?.username ?? '');
     _fullNameCtrl = TextEditingController(text: u?.fullName ?? '');
     _emailCtrl = TextEditingController(text: u?.email ?? '');
-    _role = (u != null && _roles.contains(u.role)) ? u.role : 'User';
+    // Eski "User"/"Admin" değerleri de normalize edilir (fromString → value).
+    _role = u != null
+        ? AppRole.fromString(u.role).value
+        : AppRole.satisci.value;
     _isActive = u?.isActive ?? true;
   }
 
@@ -137,10 +140,21 @@ class _UserFormScreenState extends State<UserFormScreen> {
             DropdownButtonFormField<String>(
               initialValue: _role,
               decoration: _dec(null),
-              items: _roles
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+              items: AppRole.values
+                  .map((r) =>
+                      DropdownMenuItem(value: r.value, child: Text(r.label)))
                   .toList(),
-              onChanged: (v) => setState(() => _role = v ?? 'User'),
+              onChanged: (v) =>
+                  setState(() => _role = v ?? AppRole.satisci.value),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.xs),
+              child: Text(
+                AppRole.fromString(_role).aciklama,
+                style:
+                    AppTypography.caption.copyWith(color: AppColors.slate500),
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             _FieldLabel(widget.isEdit
