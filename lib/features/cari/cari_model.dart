@@ -11,6 +11,8 @@ class Cari {
   final String country;
   // CLCARD.EINVOICE → 0: yok, 1: e-Fatura, 2: e-Arşiv
   final int eInvoiceType;
+  // Açık (sevk bekleyen) satış siparişi tutarı — yalnızca detay (getById) çağrısında dolu.
+  final double acikSiparis;
 
   Cari({
     required this.id,
@@ -24,6 +26,7 @@ class Cari {
     this.email = '',
     this.country = '',
     this.eInvoiceType = 0,
+    this.acikSiparis = 0.0,
   });
 
   factory Cari.fromJson(Map<String, dynamic> json) {
@@ -39,12 +42,16 @@ class Cari {
       email: json['email'] as String? ?? '',
       country: json['country'] as String? ?? '',
       eInvoiceType: json['eInvoiceType'] as int? ?? 0,
+      acikSiparis: (json['acikSiparis'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   bool get isBorclu => balance > 0;
   bool get isAlacakli => balance < 0;
   bool get isSifir => balance == 0;
+
+  /// Toplam risk = ödenecek bakiye (müşteri borçluysa) + sevk bekleyen sipariş.
+  double get toplamRisk => (balance > 0 ? balance : 0) + acikSiparis;
 
   bool get eFatura => eInvoiceType == 1;
   bool get eArsiv => eInvoiceType == 2;

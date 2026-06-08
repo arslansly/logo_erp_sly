@@ -1,5 +1,50 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-08 (Saha paneli — Blok ③: satışçı odaklı açık siparişler + riskli müşteriler + cari risk)
+
+## En son ne yapıldı (2026-06-08 — Saha paneli, Blok ③)
+
+Ürünleştirme yol haritasının **③ Satışçı saha** bloğu. Satışçı/Patron/Muhasebe/Admin'e açık, yetkiye bağlı yeni **"Saha" sekmesi** — satışçı odaklı bir saha kokpiti. Kapsam kullanıcıya bırakıldı ("yeni güzel şeyler olsun, var olanlar tekrar olmasın; doğru olan ney ise o olsun; satışçı seçici filtre"). DB gerçeği keşfedilip plan ona göre kuruldu (kredi limiti ekseni iptal, satışçı boyutu belgelerden).
+
+**LOGO DB keşfi (read-only, firma 126 / dönem 01'de canlı doğrulandı — referans dokümanda yoktu):**
+- **Kredi limiti KULLANILMIYOR:** CLCARD'da tek `CREDITLIMIT` yok; bu kurulumda `DBSLIMIT1..7` + `DBSRISKCNTRL1..7` + `DUEDATELIMIT` var ama **1176 carinin tamamında 0** → "kredi limiti/kalan limit" ekseni kurulmadı (boş çıkardı). Risk = bakiye + açık sipariş olarak tanımlandı.
+- **Satışçı–müşteri ilişkisi belgelerden:** `LG_SLSCLREL` (satış elemanı–cari) tablosu **boş** (0 satır). İlişki belgelerin `SALESMANREF` alanından: ORFICHE 440/729, INVOICE 205/672 dolu, **8 satışçı** (SO.* = satış, PO.* = satınalma; `LG_SLSMAN` global tablo, `FIRMNR=126` şart).
+- **Açık (sevk bekleyen) sipariş** = satış siparişi (`ORFICHE.TRCODE=1`), onaylı (`STATUS IN (3,4)`), `ORFLINE.CLOSED=0` satırların `SUM(LINENET)`'i. (PRICE×AMOUNT yanlış sonuç verir; LINENET doğru para kolonu. `SHIPPEDAMOUNT` güvenilmez → kapanış CLOSED esas — bkz. ORFICHE sevk kuralı.)
+- **⚠ Çöp kayıt:** `SO202605-00001` (2026-05-25, müşteri "Doğrunet Yazılım", satışçı PO.003) açık sipariş tutarı **1.111.111.111.111** (1.1 trilyon, bariz test). Gizlenmedi (doğru = gerçeği göster); satışçı kırılımı sayesinde PO.003 satırında izole. **LOGO'dan silinmeli.** Gerçek pipeline temiz: Murat Köksal ₺117.8M (168), Ayşegül Manastır ₺81.7M (98), Nebil Almeşat ₺58.5M (42).
+- **Riskli müşteri** = vadesi geçen alacağı olan cari (`PAYTRANS` SIGN=0, vadesi geçmiş; patron paneliyle aynı kaynak), satışçıya göre filtrelenir (o satışçının ORFICHE/INVOICE müşterileri).
+
+**Yeni yetki:** `view_saha_panel` (iki katalog senkron) — **Satışçı/Patron/Muhasebe/Admin varsayılan açık** (satış aracı). Admin editöründe otomatik görünür/düzenlenebilir.
+
+**Backend (`LogoMobileApi`):**
+- `Services/AppPermissions.cs` — `ViewSahaPanel` (`All` + `DefaultsFor`: Satışçı'ya `CreateBelge` yanında eklendi; Muhasebe'ye eklendi; Patron `All\EditSettings` ile otomatik; Admin tümü).
+- YENİ `Models/SahaModels.cs` (`SahaSatisci` + `SahaOzet` + `SahaAcikSiparis` + `SahaRiskliCari`).
+- YENİ `Services/SahaService.cs` — ortak `OrdCte` (açık sipariş fiş düzeyinde); `GetSatiscilarAsync` (leaderboard), `GetOzetAsync(satisciRef?)` (açık sipariş + risk; satisciRef null=tümü), `GetAcikSiparislerAsync`, `GetRiskliCarilerAsync`.
+- YENİ `Controllers/SahaController.cs` — `[Authorize(Policy=view_saha_panel)]`; `GET /api/saha/satiscilar|ozet?satisciRef=|acik-siparisler?satisciRef=&limit=|riskli-cariler?satisciRef=&limit=`.
+- `Program.cs` — `SahaService` DI. `Services/CariService.cs` `GetByIdAsync` + `Models/Cari.cs` — cari detayına `AcikSiparis` (açık sipariş tutarı, sadece detayda; liste sorgusu değişmedi).
+
+**Frontend (`logo_mobil`):**
+- `core/auth/app_role.dart` — `Perm.viewSahaPanel` + etiket + `canViewSahaPanel`.
+- YENİ `features/saha/` — `saha_model.dart`, `saha_service.dart`, `saha_screen.dart` (satışçı seçici çipler/leaderboard + açık sipariş hero + riskli müşteri özeti + iki önizleme bölümü; shimmer skeleton, hata/boş durum), `saha_widgets.dart` (`AcikSiparisTile`/`RiskliCariTile`/`SahaEmptyState`/`SahaDivider`), `acik_siparisler_screen.dart` + `riskli_cariler_screen.dart` (tam liste drill-down).
+- `shell/main_shell.dart` — gated "Saha" sekmesi (`Icons.storefront_rounded`).
+- `cari/cari_detay_screen.dart` + `cari_model.dart` — "Risk & açık iş" kartı (açık sipariş + toplam risk = bakiye + açık iş; sadece açık sipariş varsa görünür; `_hideBalance`'a saygılı). `Cari.acikSiparis` + `toplamRisk` getter.
+
+**Navigasyon:** Açık sipariş satırı → mevcut `SiparisDetayScreen`. Riskli müşteri satırı → mevcut `CariDetayScreen` (orada yeni risk kartı). Satışçı seçici "Tümü"/her satışçı → tüm panel + drill-down'lar o kapsama daralır.
+
+**Doğrulama:** Backend `dotnet build` (Release, çalışan Debug exe'sine dokunmadan) → **0 uyarı / 0 hata**. `flutter analyze` (tüm proje) → yeni kodda **0 issue** (kalan 9 uyarı login_screen.dart, dokunulmadı). 4 endpoint'in SQL'i gerçek DB'de Tümü + satışçı kapsamında çalıştırılıp doğrulandı.
+
+**Test adımları:**
+1. **Backend restart** (yeni policy + endpoint'ler). **Yeniden login** (token'a `view_saha_panel` gömülsün — eski token'da yok).
+2. Satışçı/Muhasebe/Patron/Admin ile login → alt navigasyonda **"Saha"** sekmesi görünür.
+3. Panel: üstte satışçı çipleri (Tümü + her satışçı, açık tutar+adet); bir satışçı seç → hero + listeler o kapsama daralır. Açık sipariş kartına dokun → sipariş detayı; riskli müşteriye dokun → cari detayı (yeni "Risk & açık iş" kartı).
+4. "Tümü" seçiliyken hero ~1.1T görünür (çöp `SO202605-00001` — LOGO'dan silince düzelir); satışçı seçince gerçek rakamlar.
+5. Açık siparişi olan bir cariyi aç → "Risk & açık iş" kartı (açık sipariş + toplam risk).
+
+**⚠ Backend ayrı repo:** `LogoMobileApi` — `logo_mobil`'in otomatik commit+push hook'u onu kapsamaz; Mac senkronu için backend ayrıca commit/push edilmeli.
+
+**Sıradaki bloklar:** ② Patron paneli — **Onaylar** (taslak onay iş akışı, kalan parça), ④ Raporlar genişletme (fatura/sipariş/irsaliye satış raporları + satışçı performans/ciro), ⑤ Demo cilası; en son (satış sonrası) altyapı & güvenlik.
+
+---
+
 Son güncelleme: 2026-06-07 (Patron paneli — Blok ②: net alacak-borç + yaşlandırma, nakit/banka, çek-senet, gerçek trend)
 
 ## En son ne yapıldı (2026-06-07 — Patron paneli, Blok ②)

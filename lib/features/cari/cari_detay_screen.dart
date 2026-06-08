@@ -176,6 +176,7 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
               _buildHeroCard(),
               if (_cari != null && (_cari!.eFatura || _cari!.eArsiv))
                 _buildEInvoiceBadge(),
+              if (_cari != null && _cari!.acikSiparis > 0) _buildRiskCard(),
               if (_vade != null && _vade!.hasVadesiGecen) _buildAgingSection(),
               _buildHareketlerSection(),
               _buildBilgiSection(),
@@ -369,6 +370,88 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RİSK & AÇIK İŞ (sevk bekleyen sipariş)
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildRiskCard() {
+    final c = _cari!;
+    String money(double v) =>
+        _hideBalance ? '₺ • • •' : Formatters.currency(v);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.local_shipping_rounded,
+                      color: AppColors.accentDark, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text('Risk & açık iş',
+                    style: AppTypography.h3.copyWith(fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _riskStat(
+                    'Açık sipariş',
+                    money(c.acikSiparis),
+                    'sevk bekleyen',
+                    AppColors.accentDark,
+                  ),
+                ),
+                Container(width: 1, height: 38, color: AppColors.slate200),
+                Expanded(
+                  child: _riskStat(
+                    'Toplam risk',
+                    money(c.toplamRisk),
+                    'bakiye + açık iş',
+                    AppColors.warning,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _riskStat(String label, String value, String sub, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption.copyWith(fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: AppTypography.h2.copyWith(fontSize: 17, color: color)),
+          const SizedBox(height: 1),
+          Text(sub, style: AppTypography.caption.copyWith(fontSize: 11)),
+        ],
       ),
     );
   }

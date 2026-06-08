@@ -9,6 +9,7 @@ import '../dashboard/dashboard_screen.dart';
 import '../malzeme/malzeme_list_screen.dart';
 import '../patron/patron_screen.dart';
 import '../profil/profil_screen.dart';
+import '../saha/saha_screen.dart';
 import '../rapor/rapor_hub_screen.dart';
 
 /// Alt sekme tanımı — yetkiye göre dinamik kurulur.
@@ -42,6 +43,9 @@ class _MainShellState extends State<MainShell> {
       const _TabDef(Icons.people_rounded, 'Cariler', CariListScreen()),
       const _TabDef(Icons.inventory_2_rounded, 'Stok', MalzemeListScreen()),
       const _TabDef(Icons.folder_rounded, 'Belgeler', BelgelerScreen()),
+      // Saha paneli — yetkiye bağlı (Satışçı/Patron/Muhasebe/Admin varsayılan).
+      if (perms.canViewSahaPanel)
+        const _TabDef(Icons.storefront_rounded, 'Saha', SahaScreen()),
       // Patron paneli — yetkiye bağlı (Patron/Muhasebe/Admin varsayılan).
       if (perms.canViewPatronPanel)
         const _TabDef(Icons.insights_rounded, 'Patron', PatronScreen()),
