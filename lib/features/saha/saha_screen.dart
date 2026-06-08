@@ -122,6 +122,7 @@ class _SahaScreenState extends State<SahaScreen> {
                   _buildSkeleton()
                 else ...[
                   _buildOzetHero(),
+                  if ((_ozet?.limitAsanSayisi ?? 0) > 0) _buildLimitAsanBanner(),
                   _buildAcikSiparislerSection(),
                   _buildRiskliCarilerSection(),
                 ],
@@ -371,6 +372,46 @@ class _SahaScreenState extends State<SahaScreen> {
               style: AppTypography.caption
                   .copyWith(color: Colors.white54, fontSize: 11)),
         ],
+      ),
+    );
+  }
+
+  // ─── Kredi limitini aşan müşteri uyarısı (yalnızca limit kullanan firmalarda) ───
+  Widget _buildLimitAsanBanner() {
+    final n = _ozet!.limitAsanSayisi;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+      child: Material(
+        color: AppColors.negativeBg,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () => _push(RiskliCarilerScreen(
+            satisciRef: _selectedRef,
+            satisciAd: _ozet?.satisciAd ?? 'Tüm satışçılar',
+          )),
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.gpp_maybe_rounded,
+                    color: AppColors.negative, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$n müşteri kredi limitini aştı',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.negative,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded,
+                    color: AppColors.negative, size: 20),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

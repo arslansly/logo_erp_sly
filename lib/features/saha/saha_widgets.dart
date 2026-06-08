@@ -169,10 +169,33 @@ class RiskliCariTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cari.cariAd,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.h3.copyWith(fontSize: 14)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(cari.cariAd,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.h3.copyWith(fontSize: 14)),
+                      ),
+                      if (cari.limitAsildi) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.negativeBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text('Limit aşıldı',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.negative,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 9.5,
+                              )),
+                        ),
+                      ],
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     [

@@ -176,7 +176,9 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
               _buildHeroCard(),
               if (_cari != null && (_cari!.eFatura || _cari!.eArsiv))
                 _buildEInvoiceBadge(),
-              if (_cari != null && _cari!.acikSiparis > 0) _buildRiskCard(),
+              if (_cari != null &&
+                  (_cari!.krediLimiti > 0 || _cari!.acikSiparis > 0))
+                _buildRiskCard(),
               if (_vade != null && _vade!.hasVadesiGecen) _buildAgingSection(),
               _buildHareketlerSection(),
               _buildBilgiSection(),
@@ -381,6 +383,11 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
     final c = _cari!;
     String money(double v) =>
         _hideBalance ? '₺ • • •' : Formatters.currency(v);
+    final hasLimit = c.limitTanimli;
+    final asildi = c.limitAsildi;
+    final borderColor = asildi
+        ? AppColors.negative.withValues(alpha: 0.30)
+        : AppColors.accent.withValues(alpha: 0.18);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
@@ -389,53 +396,162 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.18)),
+          border: Border.all(color: borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Başlık + (aşım) rozeti
             Row(
               children: [
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.12),
+                    color: asildi
+                        ? AppColors.negativeBg
+                        : AppColors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.local_shipping_rounded,
-                      color: AppColors.accentDark, size: 18),
+                  child: Icon(Icons.speed_rounded,
+                      color: asildi ? AppColors.negative : AppColors.accentDark,
+                      size: 18),
                 ),
                 const SizedBox(width: 10),
-                Text('Risk & açık iş',
+                Text('Risk durumu',
                     style: AppTypography.h3.copyWith(fontSize: 14)),
+                const Spacer(),
+                if (asildi)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.negativeBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text('Limit aşıldı',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.negative,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        )),
+                  ),
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _riskStat(
-                    'Açık sipariş',
-                    money(c.acikSiparis),
-                    'sevk bekleyen',
-                    AppColors.accentDark,
+
+            // Kredi limiti varsa: kullanım barı + kalan/aşım
+            if (hasLimit) ...[
+              _buildLimitBar(c, money),
+              const SizedBox(height: 16),
+              Container(height: 0.5, color: AppColors.slate200),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _riskStat('Bakiye', money(c.balance.abs()),
+                        c.isBorclu ? 'müşteri borçlu' : 'borcumuz yok',
+                        AppColors.slate700),
                   ),
-                ),
-                Container(width: 1, height: 38, color: AppColors.slate200),
-                Expanded(
-                  child: _riskStat(
-                    'Toplam risk',
-                    money(c.toplamRisk),
-                    'bakiye + açık iş',
-                    AppColors.warning,
+                  Container(width: 1, height: 38, color: AppColors.slate200),
+                  Expanded(
+                    child: _riskStat('Açık sipariş', money(c.acikSiparis),
+                        'sevk bekleyen', AppColors.accentDark),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              // Limit tanımsız (firma kullanmıyor) — yine de risk göster
+              Row(
+                children: [
+                  Expanded(
+                    child: _riskStat('Açık sipariş', money(c.acikSiparis),
+                        'sevk bekleyen', AppColors.accentDark),
+                  ),
+                  Container(width: 1, height: 38, color: AppColors.slate200),
+                  Expanded(
+                    child: _riskStat('Toplam risk', money(c.toplamRisk),
+                        'bakiye + açık iş', AppColors.warning),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded,
+                      size: 14, color: AppColors.slate400),
+                  const SizedBox(width: 6),
+                  Text('Kredi limiti tanımsız',
+                      style: AppTypography.caption.copyWith(fontSize: 11)),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  // Kredi limiti kullanım barı (kullanılan / limit) + kalan veya aşım.
+  Widget _buildLimitBar(Cari c, String Function(double) money) {
+    final oran = c.limitKullanimOrani;
+    final asildi = c.limitAsildi;
+    final yuzde = c.limitKullanimYuzde;
+    final barColor = asildi
+        ? AppColors.negative
+        : (oran >= 0.8 ? AppColors.warning : AppColors.positive);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Kredi limiti',
+                style: AppTypography.caption.copyWith(fontSize: 12)),
+            const Spacer(),
+            Text(money(c.krediLimiti),
+                style: AppTypography.h3.copyWith(fontSize: 14)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Container(
+            height: 10,
+            color: AppColors.slate100,
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: oran == 0 ? 0.02 : oran,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: barColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              'Kullanılan ${money(c.toplamRisk)} · %${yuzde.toStringAsFixed(0)}',
+              style: AppTypography.caption.copyWith(fontSize: 11),
+            ),
+            const Spacer(),
+            Text(
+              asildi
+                  ? 'Aşım ${money(c.kalanLimit.abs())}'
+                  : 'Kalan ${money(c.kalanLimit)}',
+              style: AppTypography.caption.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: asildi ? AppColors.negative : AppColors.positive,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

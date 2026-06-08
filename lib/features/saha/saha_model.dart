@@ -41,6 +41,7 @@ class SahaOzet {
   final int musteriSayisi;
   final int riskliCariSayisi;
   final double vadesiGecenToplam;
+  final int limitAsanSayisi; // kredi limitini aşan müşteri (0 = firma limit kullanmıyor)
 
   const SahaOzet({
     required this.satisciRef,
@@ -50,6 +51,7 @@ class SahaOzet {
     required this.musteriSayisi,
     required this.riskliCariSayisi,
     required this.vadesiGecenToplam,
+    required this.limitAsanSayisi,
   });
 
   factory SahaOzet.fromJson(Map<String, dynamic> j) => SahaOzet(
@@ -60,6 +62,7 @@ class SahaOzet {
         musteriSayisi: _i(j['musteriSayisi']),
         riskliCariSayisi: _i(j['riskliCariSayisi']),
         vadesiGecenToplam: _d(j['vadesiGecenToplam']),
+        limitAsanSayisi: _i(j['limitAsanSayisi']),
       );
 }
 
@@ -109,6 +112,7 @@ class SahaRiskliCari {
   final double vadesiGecen;
   final int enEskiGun;
   final double acikSiparis;
+  final double krediLimiti; // 0 = limit tanımsız
 
   const SahaRiskliCari({
     required this.cariId,
@@ -118,10 +122,14 @@ class SahaRiskliCari {
     required this.vadesiGecen,
     required this.enEskiGun,
     required this.acikSiparis,
+    required this.krediLimiti,
   });
 
   /// Toplam risk = ödenecek bakiye (borç) + sevk bekleyen sipariş.
   double get toplamRisk => (bakiye > 0 ? bakiye : 0) + acikSiparis;
+
+  /// Kredi limiti aşıldı mı (limit tanımlıysa).
+  bool get limitAsildi => krediLimiti > 0 && toplamRisk > krediLimiti;
 
   factory SahaRiskliCari.fromJson(Map<String, dynamic> j) => SahaRiskliCari(
         cariId: _i(j['cariId']),
@@ -131,5 +139,6 @@ class SahaRiskliCari {
         vadesiGecen: _d(j['vadesiGecen']),
         enEskiGun: _i(j['enEskiGun']),
         acikSiparis: _d(j['acikSiparis']),
+        krediLimiti: _d(j['krediLimiti']),
       );
 }
