@@ -2,37 +2,37 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
-import 'banka_hesap_detay_screen.dart';
 import 'patron_model.dart';
 import 'patron_service.dart';
 
-/// Bankalar listesi (patron paneli drill-down 1. seviye).
-/// Her banka + hesap sayısı + toplam bakiye; bankaya dokununca hesapları açılır.
-class BankaHesaplarScreen extends StatefulWidget {
-  const BankaHesaplarScreen({super.key});
+/// Bir bankanın hesapları (patron paneli drill-down 2. seviye).
+/// Her hesap: ad + döviz rozeti + IBAN + güncel bakiye (BNFLINE'dan).
+class BankaHesapDetayScreen extends StatefulWidget {
+  final int bankaRef;
+  final String bankaAd;
+
+  const BankaHesapDetayScreen({
+    super.key,
+    required this.bankaRef,
+    required this.bankaAd,
+  });
 
   @override
-  State<BankaHesaplarScreen> createState() => _BankaHesaplarScreenState();
+  State<BankaHesapDetayScreen> createState() => _BankaHesapDetayScreenState();
 }
 
-class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
-  late Future<List<BankaKayit>> _future;
+class _BankaHesapDetayScreenState extends State<BankaHesapDetayScreen> {
+  late Future<List<BankaHesap>> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = patronService.getBankalar();
+    _future = patronService.getBankaHesaplar(widget.bankaRef);
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = patronService.getBankalar());
+    setState(() => _future = patronService.getBankaHesaplar(widget.bankaRef));
     await _future;
-  }
-
-  void _openHesaplar(BankaKayit b) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => BankaHesapDetayScreen(bankaRef: b.id, bankaAd: b.ad),
-    ));
   }
 
   @override
@@ -40,7 +40,17 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Bankalar', style: AppTypography.h1.copyWith(fontSize: 20)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Banka hesapları',
+                style: AppTypography.h2.copyWith(fontSize: 16)),
+            Text(widget.bankaAd,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption.copyWith(fontSize: 11)),
+          ],
+        ),
         backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -48,32 +58,32 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.accent,
-        child: FutureBuilder<List<BankaKayit>>(
+        child: FutureBuilder<List<BankaHesap>>(
           future: _future,
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
               return _loading();
             }
             if (snap.hasError) return _error(snap.error.toString());
-            final bankalar = snap.data ?? [];
-            if (bankalar.isEmpty) return _empty();
-            return _content(bankalar);
+            final hesaplar = snap.data ?? [];
+            if (hesaplar.isEmpty) return _empty();
+            return _content(hesaplar);
           },
         ),
       ),
     );
   }
 
-  Widget _content(List<BankaKayit> bankalar) {
-    final toplam = bankalar.fold<double>(0, (s, b) => s + b.bakiye);
+  Widget _content(List<BankaHesap> hesaplar) {
+    final toplam = hesaplar.fold<double>(0, (s, h) => s + h.bakiye);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
-        _ozetKart(toplam, bankalar.length),
+        _ozetKart(toplam, hesaplar.length),
         const SizedBox(height: 16),
-        for (final b in bankalar) ...[
-          _bankaCard(b),
+        for (final h in hesaplar) ...[
+          _hesapCard(h),
           const SizedBox(height: 10),
         ],
       ],
@@ -102,7 +112,7 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Toplam banka bakiyesi',
+          Text('Banka toplamı',
               style: AppTypography.caption
                   .copyWith(color: Colors.white70, fontSize: 13)),
           const SizedBox(height: 8),
@@ -117,7 +127,7 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
                 )),
           ),
           const SizedBox(height: 6),
-          Text('$adet banka',
+          Text('$adet hesap',
               style: AppTypography.caption
                   .copyWith(color: Colors.white60, fontSize: 12)),
         ],
@@ -125,69 +135,73 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
     );
   }
 
-  Widget _bankaCard(BankaKayit b) {
-    final negatif = b.bakiye < 0;
+  Widget _hesapCard(BankaHesap h) {
+    final negatif = h.bakiye < 0;
     final color = negatif ? AppColors.negative : AppColors.positive;
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: () => _openHesaplar(b),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.slate100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Icon(Icons.account_balance_rounded,
-                    color: AppColors.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(b.ad,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.h3.copyWith(
-                          fontSize: 14,
-                          color: AppColors.slate900,
-                        )),
-                    const SizedBox(height: 2),
-                    Text('${b.hesapSayisi} hesap',
-                        style: AppTypography.caption.copyWith(fontSize: 11)),
+                    Flexible(
+                      child: Text(h.ad,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.h3.copyWith(
+                            fontSize: 13,
+                            color: AppColors.slate900,
+                          )),
+                    ),
+                    if (h.currencyKod.isNotEmpty && h.currencyKod != 'TL') ...[
+                      const SizedBox(width: 6),
+                      _dovizRozet(h.currencyKod),
+                    ],
                   ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(Formatters.currencyCompact(b.bakiye),
-                      style: AppTypography.h3.copyWith(
-                        fontSize: 14,
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      )),
-                  const SizedBox(height: 2),
-                  const Icon(Icons.chevron_right_rounded,
-                      color: AppColors.slate400, size: 18),
+                if (h.iban.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(h.iban,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(fontSize: 10.5)),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 10),
+          Text(Formatters.currency(h.bakiye),
+              style: AppTypography.h3.copyWith(
+                fontSize: 14,
+                color: color,
+                fontWeight: FontWeight.w700,
+              )),
+        ],
       ),
     );
   }
+
+  Widget _dovizRozet(String kod) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(kod,
+            style: AppTypography.caption.copyWith(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.accentDark,
+            )),
+      );
 
   Widget _loading() => ListView.separated(
         padding: const EdgeInsets.all(16),
@@ -225,7 +239,7 @@ class _BankaHesaplarScreenState extends State<BankaHesaplarScreen> {
         children: [
           const SizedBox(height: 120),
           Center(
-            child: Text('Banka bulunamadı',
+            child: Text('Bu bankada hesap yok',
                 style: AppTypography.bodySmall.copyWith(color: AppColors.slate500)),
           ),
         ],

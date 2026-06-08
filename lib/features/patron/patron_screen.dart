@@ -407,7 +407,7 @@ class _PatronScreenState extends State<PatronScreen> {
                   iconBg: AppColors.slate100,
                   label: 'Banka',
                   valueText: _money(o.bankaBakiye, compact: true),
-                  sub: '${o.bankaHesapSayisi} hesap',
+                  sub: '${o.bankaHesapSayisi} banka',
                   onTap: () => _push(const BankaHesaplarScreen()),
                 ),
               ),

@@ -189,9 +189,12 @@ class _CeklerScreenState extends State<CeklerScreen> {
     final gecmis = c.vade != null &&
         c.vade!.isBefore(DateTime.now().subtract(const Duration(days: 0)));
     final renk = _isTahsil ? AppColors.positive : AppColors.negative;
-    final unvan = c.kesideci.isNotEmpty
-        ? c.kesideci
-        : (c.banka.isNotEmpty ? c.banka : '${c.tur} #${c.id}');
+    // Cari hesap (CSTRANS) en anlamlısı; yoksa keşideci/banka'ya düş.
+    final unvan = c.cariAd.isNotEmpty
+        ? c.cariAd
+        : (c.kesideci.isNotEmpty
+            ? c.kesideci
+            : (c.banka.isNotEmpty ? c.banka : '${c.tur} #${c.id}'));
 
     return Container(
       padding: const EdgeInsets.all(14),

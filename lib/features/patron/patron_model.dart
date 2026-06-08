@@ -103,18 +103,59 @@ class PatronOzet {
       );
 }
 
-/// Banka hesabı + bakiye (drill-down).
+/// Banka (BNCARD) + hesap sayısı + toplam bakiye (drill-down 1. seviye).
+class BankaKayit {
+  final int id;
+  final String kod;
+  final String ad;
+  final int hesapSayisi;
+  final double bakiye;
+
+  BankaKayit({
+    required this.id,
+    required this.kod,
+    required this.ad,
+    required this.hesapSayisi,
+    required this.bakiye,
+  });
+
+  factory BankaKayit.fromJson(Map<String, dynamic> j) => BankaKayit(
+        id: (j['id'] as num?)?.toInt() ?? 0,
+        kod: j['kod'] as String? ?? '',
+        ad: j['ad'] as String? ?? '',
+        hesapSayisi: (j['hesapSayisi'] as num?)?.toInt() ?? 0,
+        bakiye: (j['bakiye'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+/// Banka hesabı (BANKACC) + döviz + bakiye (drill-down 2. seviye).
 class BankaHesap {
+  final int id;
   final String kod;
   final String ad;
   final double bakiye;
+  final int currency;
+  final String currencyKod; // "TL"/"USD"/...
+  final String iban;
 
-  BankaHesap({required this.kod, required this.ad, required this.bakiye});
+  BankaHesap({
+    required this.id,
+    required this.kod,
+    required this.ad,
+    required this.bakiye,
+    this.currency = 0,
+    this.currencyKod = '',
+    this.iban = '',
+  });
 
   factory BankaHesap.fromJson(Map<String, dynamic> j) => BankaHesap(
+        id: (j['id'] as num?)?.toInt() ?? 0,
         kod: j['kod'] as String? ?? '',
         ad: j['ad'] as String? ?? '',
         bakiye: (j['bakiye'] as num?)?.toDouble() ?? 0.0,
+        currency: (j['currency'] as num?)?.toInt() ?? 0,
+        currencyKod: j['currencyKod'] as String? ?? '',
+        iban: j['iban'] as String? ?? '',
       );
 }
 
@@ -129,6 +170,7 @@ class CekKayit {
   final double tutar;
   final String banka;
   final String kesideci;
+  final String cariAd; // çekin bağlı olduğu cari (CSTRANS)
 
   CekKayit({
     required this.id,
@@ -140,6 +182,7 @@ class CekKayit {
     required this.tutar,
     required this.banka,
     required this.kesideci,
+    this.cariAd = '',
   });
 
   factory CekKayit.fromJson(Map<String, dynamic> j) => CekKayit(
@@ -152,5 +195,6 @@ class CekKayit {
         tutar: (j['tutar'] as num?)?.toDouble() ?? 0.0,
         banka: j['banka'] as String? ?? '',
         kesideci: j['kesideci'] as String? ?? '',
+        cariAd: j['cariAd'] as String? ?? '',
       );
 }

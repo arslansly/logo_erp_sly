@@ -18,10 +18,26 @@ class PatronService {
     }
   }
 
-  // Banka hesapları + bakiye
-  Future<List<BankaHesap>> getBankaHesaplar() async {
+  // Bankalar (drill-down 1. seviye): banka + hesap sayısı + toplam bakiye
+  Future<List<BankaKayit>> getBankalar() async {
     try {
-      final response = await _dio.get('/api/Patron/banka-hesaplar');
+      final response = await _dio.get('/api/Patron/bankalar');
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((j) => BankaKayit.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // Bir bankanın hesapları (drill-down 2. seviye): hesap + döviz + bakiye
+  Future<List<BankaHesap>> getBankaHesaplar(int bankaRef) async {
+    try {
+      final response = await _dio.get(
+        '/api/Patron/banka-hesaplar',
+        queryParameters: {'bankaRef': bankaRef},
+      );
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((j) => BankaHesap.fromJson(j as Map<String, dynamic>))

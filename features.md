@@ -1,5 +1,31 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-08 (Patron paneli düzeltmeleri — banka BNFLINE/hiyerarşi + çek cari adı)
+
+## En son ne yapıldı (2026-06-08 — Patron paneli banka & çek düzeltmeleri)
+
+Kullanıcı cihaz geri bildirimi (3 sorun): banka özet "8 hesap" ↔ drill "10" tutarsızlığı; banka bakiyeleri LOGO'yla tutmuyor; banka→hesap (Garanti TL/USD) kırılımı yok; ödenecek çeklerde keşideci (kendi firma adı) yerine cari görmek.
+
+**LOGO DB düzeltmeleri (firma 126'da canlı doğrulandı — bkz. [[logo-kasa-banka-cek-tables]]):**
+- **Banka bakiyesi GNTOTBN YANLIŞ → BNFLINE DOĞRU.** GNTOTBN +19.2M veriyordu; gerçek **−70.36M** (kullanıcının LOGO ekstresiyle tutturduğu formül). Hiyerarşi: `BNCARD`=bankalar (10), `BANKACC`=hesaplar (67, `BANKREF`→BNCARD), `BNFLINE`=hareketler (`BNACCREF`→BANKACC). **Hesap bakiyesi = `SUM(SIGN=0 ? +AMOUNT : -AMOUNT)` BNFLINE; banka = hesap toplamı.** Döviz `BANKACC.CURRENCY` 0=TL/1=USD/17=GBP/20=EUR. (Eski kod BNCARD'ı "hesap" sanıyordu → 8 vs 10.)
+- **Çekin carisi:** CSCARD'da CLIENTREF yok; cari `CSTRANS` (`CSREF`→çek, `CARDREF`→cari, **`CARDMD=5`=cari hesap**) en güncel kayıttan. `OWING` çoğunlukla kendi firma adını taşıyor → cari adı çok daha anlamlı. Tahsil 292/292, ödeme 69/69 %100 çözüldü.
+
+**Backend (`LogoMobileApi`):**
+- `Models/PatronOzet.cs` — YENİ `BankaKayit` (id/kod/ad/hesapSayisi/bakiye); `BankaHesap` genişletildi (id/currency/currencyKod/iban); `CekKayit.CariAd`.
+- `Services/PatronService.cs` — ozet banka GNTOTBN→**BNFLINE** (toplam + aktif hesabı olan banka sayısı); `GetBankalarAsync` (banka+hesap sayısı+toplam), `GetBankaHesaplarAsync(int bankaRef)` (hesaplar+döviz, `CurrencyKodu` map); `GetCeklerAsync` CSTRANS ile `CariAd`.
+- `Controllers/PatronController.cs` — YENİ `GET /api/patron/bankalar`; `banka-hesaplar` artık `?bankaRef=` ister.
+
+**Frontend (`logo_mobil`):**
+- `patron_model.dart` — `BankaKayit` + genişletilmiş `BankaHesap` + `CekKayit.cariAd`. `patron_service.dart` — `getBankalar()` + `getBankaHesaplar(bankaRef)`.
+- `banka_hesaplar_screen.dart` → artık **bankalar** listesi (her banka: hesap sayısı + toplam, dokun→hesaplar); YENİ `banka_hesap_detay_screen.dart` (bankanın hesapları + döviz rozeti + IBAN + bakiye, negatif kırmızı/pembe). Özet kartlar `FittedBox` (negatif/büyük rakam taşmaz).
+- `patron_screen.dart` — banka KPI alt etiketi "{n} **banka**". `cekler_screen.dart` — kart başlığı artık `cariAd` (yoksa keşideci/banka).
+
+**Doğrulama:** Backend `dotnet build` (Release) → **0/0**. `flutter analyze` (patron) → **0 issue**. Banka toplamı −70.36M / 10 banka, Garanti TL 14.9M / USD 0 / EUR 0, çek-cari %100 çözüm canlı DB'de doğrulandı.
+
+**Test:** Backend restart. Patron → Nakit&banka → Banka kartı (₺-70,4M / "10 banka") → dokun → bankalar; bir bankaya dokun → hesapları (TL/USD/EUR rozetli); Çek → Tahsil/Ödenecek → başlıkta cari adı.
+
+---
+
 Son güncelleme: 2026-06-08 (Saha paneli — Blok ③: satışçı odaklı açık siparişler + riskli müşteriler + cari risk)
 
 ## En son ne yapıldı (2026-06-08 — Saha paneli, Blok ③)
