@@ -282,10 +282,13 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
                 alignment: Alignment.centerLeft,
                 child: OnayRozeti(status: _onayDurumu),
               ),
-              if (_onayDurumu == 'Rejected' &&
-                  (_redGerekce?.isNotEmpty ?? false)) ...[
+              if (_onayDurumu == 'Rejected') ...[
                 const SizedBox(height: AppSpacing.sm),
-                RedGerekceKutusu(gerekce: _redGerekce!),
+                RedGerekceKutusu(
+                  gerekce: (_redGerekce?.isNotEmpty ?? false)
+                      ? _redGerekce!
+                      : 'Gerekçe belirtilmedi',
+                ),
               ],
               const SizedBox(height: AppSpacing.md),
             ],
