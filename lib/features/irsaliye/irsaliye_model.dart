@@ -231,10 +231,16 @@ class IrsaliyeTaslakModel {
   int? transferredShipmentId;
   DateTime? transferredAt;
   String? lastError;
+  String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
+  String? rejectReason;
   String createdBy;
   DateTime? createdAt;
   DateTime? updatedAt;
   List<IrsaliyeTaslakSatirModel> lines;
+
+  bool get isOnaylandi => approvalStatus == 'Approved';
+  bool get isReddedildi => approvalStatus == 'Rejected';
+  bool get isOnayBekliyor => approvalStatus == 'Pending';
 
   IrsaliyeTaslakModel({
     this.id,
@@ -260,6 +266,8 @@ class IrsaliyeTaslakModel {
     this.transferredShipmentId,
     this.transferredAt,
     this.lastError,
+    this.approvalStatus,
+    this.rejectReason,
     this.createdBy = '',
     this.createdAt,
     this.updatedAt,
@@ -293,6 +301,8 @@ class IrsaliyeTaslakModel {
             ? DateTime.parse(json['transferredAt'] as String)
             : null,
         lastError: json['lastError'] as String?,
+        approvalStatus: json['approvalStatus'] as String?,
+        rejectReason: json['rejectReason'] as String?,
         createdBy: json['createdBy'] as String? ?? '',
         createdAt: (json['createdAt'] as String?) != null
             ? DateTime.parse(json['createdAt'] as String)

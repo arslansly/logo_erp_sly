@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/pdf/belge_pdf.dart';
 import '../../core/pdf/belge_onizleme_screen.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/widgets/onay_rozeti.dart';
 import '../../core/theme/app_typography.dart';
 import '../cari/cari_list_screen.dart';
 import '../cari/cari_model.dart';
@@ -62,6 +63,8 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
   bool _isSaving = false;
   String? _loadError;
   int? _existingDraftId;
+  String? _onayDurumu; // düzenlenen taslağın onay durumu
+  String? _redGerekce; // reddedildiyse gerekçe
 
   @override
   void initState() {
@@ -167,6 +170,8 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
       if (!mounted) return;
       setState(() {
         _existingDraftId = t.id;
+        _onayDurumu = t.approvalStatus;
+        _redGerekce = t.rejectReason;
         _tur = IrsaliyeTuru.fromTrCode(t.trCode);
         _date = t.date;
         _ficheNoController.text = t.ficheNo ?? '';
@@ -271,6 +276,19 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
           padding: const EdgeInsets.fromLTRB(
               AppSpacing.md, AppSpacing.md, AppSpacing.md, 200),
           children: [
+            // Onay durumu — düzenlenen taslakta rozet + reddedildiyse gerekçe.
+            if (_onayDurumu != null) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OnayRozeti(status: _onayDurumu),
+              ),
+              if (_onayDurumu == 'Rejected' &&
+                  (_redGerekce?.isNotEmpty ?? false)) ...[
+                const SizedBox(height: AppSpacing.sm),
+                RedGerekceKutusu(gerekce: _redGerekce!),
+              ],
+              const SizedBox(height: AppSpacing.md),
+            ],
             _TurRozet(tur: _tur!),
             const SizedBox(height: AppSpacing.md),
             _CariSecici(
@@ -1670,51 +1688,34 @@ class _StickyBottom extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: isSaving ? null : onTaslakKaydet,
-                      icon: const Icon(Icons.save_outlined),
-                      label: const Text('Taslak Kaydet'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.slate700,
-                        side: const BorderSide(color: AppColors.slate300),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+              // Onay zorunlu: form yalnızca taslak kaydeder (onaya düşer).
+              // Aktarım, patron onayından sonra listeden yapılır.
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: isSaving ? null : onTaslakKaydet,
+                  icon: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(isSaving
+                      ? 'Kaydediliyor...'
+                      : 'Taslak Kaydet (Onaya Gönder)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: isSaving ? null : onAktar,
-                      icon: isSaving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.cloud_upload_rounded),
-                      label: Text(
-                          isSaving ? 'Kaydediliyor...' : 'Kaydet ve Aktar'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.surface,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
