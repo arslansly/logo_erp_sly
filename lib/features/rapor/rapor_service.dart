@@ -101,6 +101,28 @@ class RaporService {
     }
   }
 
+  // 6) Satış performans / ciro raporu (tek nesne döner)
+  Future<SatisPerformansRapor> getSatisPerformans({
+    DateTime? baslangic,
+    DateTime? bitis,
+    int? satisciRef,
+  }) async {
+    try {
+      final params = <String, dynamic>{};
+      if (baslangic != null) {
+        params['baslangic'] = baslangic.toIso8601String();
+      }
+      if (bitis != null) params['bitis'] = bitis.toIso8601String();
+      if (satisciRef != null) params['satisciRef'] = satisciRef;
+      final response = await _dio.get('/api/Rapor/satis-performans',
+          queryParameters: params);
+      return SatisPerformansRapor.fromJson(
+          response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.connectionError) {

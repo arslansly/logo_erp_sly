@@ -4,9 +4,11 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import 'cari_bakiye_rapor_screen.dart';
 import 'kritik_stok_rapor_screen.dart';
+import 'satis_performans_rapor_screen.dart';
 import 'stok_ambar_rapor_screen.dart';
 import 'stok_durum_rapor_screen.dart';
 import 'vade_rapor_screen.dart';
+import '../auth/auth_service.dart';
 
 // Raporlar hub ekranı — tüm raporları kategori kartları halinde listeler.
 // Hem alt sekme kökü hem de Ana sayfadan push edilerek açılabilir.
@@ -16,6 +18,16 @@ class RaporHubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final raporlar = <_RaporTanim>[
+      // Satış performansı — finansal rapor; yalnızca yetkisi olana göster
+      // (backend view_financial_reports ister, Satışçı 403 alır).
+      if (authService.perms.canViewFinancialReports)
+        _RaporTanim(
+          baslik: 'Satış Performansı',
+          aciklama: 'Ciro trendi, satışçı performansı ve en çok satış yapılan müşteriler',
+          ikon: Icons.trending_up_rounded,
+          renk: AppColors.positive,
+          ekran: const SatisPerformansRaporScreen(),
+        ),
       _RaporTanim(
         baslik: 'Cari Bakiye Raporu',
         aciklama: 'Kod, ünvan, şehir, telefon, borç / alacak / bakiye',

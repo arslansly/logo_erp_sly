@@ -208,3 +208,117 @@ class KritikStokRapor {
     );
   }
 }
+
+// ───────── 6) Satış performans / ciro raporu ─────────
+class SatisPerformansRapor {
+  final double toplamCiro;
+  final int faturaSayisi;
+  final double ortalamaFatura;
+  final List<AylikCiro> aylikTrend;
+  final List<SatisciPerformans> satiscilar;
+  final List<MusteriCiro> topMusteriler;
+
+  SatisPerformansRapor({
+    required this.toplamCiro,
+    required this.faturaSayisi,
+    required this.ortalamaFatura,
+    required this.aylikTrend,
+    required this.satiscilar,
+    required this.topMusteriler,
+  });
+
+  bool get bos => faturaSayisi == 0 && aylikTrend.isEmpty;
+
+  factory SatisPerformansRapor.fromJson(Map<String, dynamic> json) {
+    List<T> liste<T>(String key, T Function(Map<String, dynamic>) f) =>
+        ((json[key] as List<dynamic>?) ?? const [])
+            .map((e) => f(e as Map<String, dynamic>))
+            .toList();
+    return SatisPerformansRapor(
+      toplamCiro: (json['toplamCiro'] as num?)?.toDouble() ?? 0.0,
+      faturaSayisi: (json['faturaSayisi'] as num?)?.toInt() ?? 0,
+      ortalamaFatura: (json['ortalamaFatura'] as num?)?.toDouble() ?? 0.0,
+      aylikTrend: liste('aylikTrend', AylikCiro.fromJson),
+      satiscilar: liste('satiscilar', SatisciPerformans.fromJson),
+      topMusteriler: liste('topMusteriler', MusteriCiro.fromJson),
+    );
+  }
+}
+
+class AylikCiro {
+  final int yil;
+  final int ay;
+  final double ciro;
+  final int adet;
+
+  AylikCiro({
+    required this.yil,
+    required this.ay,
+    required this.ciro,
+    required this.adet,
+  });
+
+  // Kısa ay etiketi (grafik altı): "Oca 24" gibi.
+  static const _aylar = [
+    '', 'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+    'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'
+  ];
+  String get ayKisa => (ay >= 1 && ay <= 12) ? _aylar[ay] : '';
+  String get etiket => '$ayKisa ${(yil % 100).toString().padLeft(2, '0')}';
+
+  factory AylikCiro.fromJson(Map<String, dynamic> json) => AylikCiro(
+        yil: (json['yil'] as num?)?.toInt() ?? 0,
+        ay: (json['ay'] as num?)?.toInt() ?? 0,
+        ciro: (json['ciro'] as num?)?.toDouble() ?? 0.0,
+        adet: (json['adet'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class SatisciPerformans {
+  final int id;
+  final String kod;
+  final String ad;
+  final double ciro;
+  final int adet;
+
+  SatisciPerformans({
+    required this.id,
+    required this.kod,
+    required this.ad,
+    required this.ciro,
+    required this.adet,
+  });
+
+  factory SatisciPerformans.fromJson(Map<String, dynamic> json) =>
+      SatisciPerformans(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        kod: json['kod'] as String? ?? '',
+        ad: json['ad'] as String? ?? '',
+        ciro: (json['ciro'] as num?)?.toDouble() ?? 0.0,
+        adet: (json['adet'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class MusteriCiro {
+  final int cariId;
+  final String kod;
+  final String ad;
+  final double ciro;
+  final int adet;
+
+  MusteriCiro({
+    required this.cariId,
+    required this.kod,
+    required this.ad,
+    required this.ciro,
+    required this.adet,
+  });
+
+  factory MusteriCiro.fromJson(Map<String, dynamic> json) => MusteriCiro(
+        cariId: (json['cariId'] as num?)?.toInt() ?? 0,
+        kod: json['kod'] as String? ?? '',
+        ad: json['ad'] as String? ?? '',
+        ciro: (json['ciro'] as num?)?.toDouble() ?? 0.0,
+        adet: (json['adet'] as num?)?.toInt() ?? 0,
+      );
+}
