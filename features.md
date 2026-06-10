@@ -1,5 +1,39 @@
 # logo_mobil — Özellik Durumu
 
+Son güncelleme: 2026-06-10 (Demo cilası + Satış performans raporu + Onay iş akışı)
+
+## En son ne yapıldı (2026-06-10 — Demo cilası, satış raporu, onay akışı)
+
+Ürünleştirme: patronlara gösterilecek demo için üç blok. LOGO'ya gerçek aktarım ve HTTPS/güvenlik kullanıcı tarafından sonraya bırakıldı.
+
+**① Demo cilası (sadece Flutter):**
+- YENİ `lib/core/widgets/fade_slide_in.dart` (`FadeSlideIn` — kademeli aşağıdan-yukarı giriş animasyonu) + `animated_count.dart` (`AnimatedCount` — 0'dan değere sayan count-up).
+- `dashboard_screen.dart` — sahte statik gri "shimmer" kutuları **gerçek `Shimmer.fromColors`** ile değiştirildi (hero/KPI/son hareketler iskeleti); kartlara kademeli giriş; hero "Toplam alacak" count-up. Çift `@override` + bozuk `_buildMiniKpis` formatı düzeltildi.
+- `patron_screen.dart` + `saha_screen.dart` — yüklenen bölümlere kademeli giriş; hero rakamları (Net bakiye / Açık sipariş) count-up.
+
+**② Satış performans raporu (backend + Flutter):** Patron'u en çok etkileyen grafikli ciro.
+- Backend: YENİ `Models/SatisPerformansRapor.cs` (`SatisPerformansRapor` + `AylikCiro`+`SatisciPerformans`+`MusteriCiro`); `RaporService.GetSatisPerformansAsync` (4 bölüm ayrı try/catch — özet + son 12 ay trendi + satışçı leaderboard + top 10 müşteri); `RaporController` YENİ `GET /api/rapor/satis-performans` (`view_financial_reports`). **Ciro = NETTOTAL − TOTALVAT** (KDV hariç), satış = `INVOICE.TRCODE IN (7,8,9)`. Float'a karşı SQL'de `CAST(... AS decimal(18,2))`.
+- Flutter: `rapor_model.dart`'a 4 model; `rapor_service.getSatisPerformans`; YENİ `satis_performans_rapor_screen.dart` (count-up ciro hero + **animasyonlu özel bar grafik** dokunmalı + madalyalı satışçı leaderboard + top müşteriler, müşteri→cari detay); `rapor_hub_screen.dart` en üste eklendi (yetkiye bağlı).
+
+**③ Onay iş akışı (backend + Flutter):** Satışçının kestiği taslak patron/muhasebe onayına düşer.
+- Yeni yetki `approve_belge` (Patron/Muhasebe/Admin varsayılan; Satışçı yok) — `AppPermissions.cs` (katalog + DefaultsFor) ve Flutter `app_role.dart` (Perm + label + `canApproveBelge`).
+- DB: YENİ `Scripts/008_ApprovalWorkflow.sql` — 3 taslak tablosuna `ApprovalStatus`(default 'Pending')/`ApprovedBy`/`ApprovedAt`/`RejectReason` + index (idempotent).
+- Backend: YENİ `Models/OnayModels.cs` (`OnayBekleyen`+`OnayOzet`+`OnayKararRequest`); `Services/OnayService.cs` (3 tablo UNION ALL bekleyenler + özet + onayla/reddet, tip→tablo whitelist); `Controllers/OnayController.cs` (`[Authorize(approve_belge)]`, `bekleyenler|ozet|{tip}/{id}/onayla|reddet`); `Program.cs` DI.
+- Flutter: YENİ `lib/features/onay/` (`onay_model.dart` — `OnayBelgeTip` enum + 2 model; `onay_service.dart`; `onaylar_screen.dart` — tür filtreli liste, onayla/reddet (gerekçe dialog), shimmer/boş/hata, kademeli giriş); `patron_screen.dart`'a **onay bekleyenler banner'ı** (sayı rozetli, yetkiye bağlı, dokun→Onaylar, dönünce sayı tazelenir).
+
+**Doğrulama:** `flutter analyze` (tüm proje) → yeni kodda **0 issue** (kalan 9 uyarı login_screen.dart, dokunulmadı). Backend Mac'te derlenemedi (dotnet yok) — mevcut servis/controller kalıpları birebir izlendi, VS'te derlenecek.
+
+**Test adımları:**
+1. **SQL:** `008_ApprovalWorkflow.sql`'i SSMS'te LOGOMBL'e karşı tek seferlik çalıştır.
+2. **Backend derle + restart** (yeni `OnayController`/`OnayService`/`RaporService` + `approve_belge` policy).
+3. **Yeniden login** (token'a `approve_belge` gömülsün — eski token'da yok; yoksa banner/Onaylar gözükmez/403).
+4. Patron → **Raporlar → Satış Performansı**: ciro hero sayar, aylık bar grafiğe dokun, satışçı/müşteri listeleri.
+5. Satışçı ile bir taslak fatura/sipariş kes (Pending olur) → Patron'la gir → Patron panelinde **"Onay bekleyen belge" banner'ı** → Onaylar → onayla/reddet → liste güncellenir.
+
+**Sıradaki (opsiyonel):** taslak liste kartlarına "Onaylandı/Reddedildi" rozeti; onay gerektiren taslağın aktarımını onaya bağlama (transfer zaten stub); LOGO'ya gerçek aktarım; HTTPS/güvenlik.
+
+---
+
 Son güncelleme: 2026-06-08 (Patron paneli düzeltmeleri — banka BNFLINE/hiyerarşi + çek cari adı)
 
 ## En son ne yapıldı (2026-06-08 — Patron paneli banka & çek düzeltmeleri)

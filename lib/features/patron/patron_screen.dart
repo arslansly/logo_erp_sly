@@ -6,6 +6,10 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/fade_slide_in.dart';
 import '../../core/widgets/animated_count.dart';
 import '../../core/utils/formatters.dart';
+import '../auth/auth_service.dart';
+import '../onay/onay_model.dart';
+import '../onay/onay_service.dart';
+import '../onay/onaylar_screen.dart';
 import 'patron_model.dart';
 import 'patron_service.dart';
 import 'banka_hesaplar_screen.dart';
@@ -22,6 +26,7 @@ class PatronScreen extends StatefulWidget {
 
 class _PatronScreenState extends State<PatronScreen> {
   PatronOzet? _ozet;
+  OnayOzet? _onayOzet; // onay bekleyen sayıları (yetkisi varsa)
   String? _error;
   bool _isLoading = true;
   bool _hideBalance = false;
@@ -34,6 +39,8 @@ class _PatronScreenState extends State<PatronScreen> {
 
   Future<void> _load() async {
     if (mounted) setState(() => _isLoading = true);
+    // Onay bekleyenleri arka planda ayrı çek — patron paneli verisini bloklamasın.
+    _loadOnayOzet();
     try {
       final ozet = await patronService.getOzet();
       if (!mounted) return;
@@ -48,6 +55,17 @@ class _PatronScreenState extends State<PatronScreen> {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  // Onay bekleyen sayıları — yalnızca onay yetkisi olan kullanıcı için.
+  Future<void> _loadOnayOzet() async {
+    if (!authService.perms.canApproveBelge) return;
+    try {
+      final o = await onayService.getOzet();
+      if (mounted) setState(() => _onayOzet = o);
+    } catch (_) {
+      // Sessiz geç — banner gizli kalır, panel etkilenmez.
     }
   }
 
@@ -75,6 +93,8 @@ class _PatronScreenState extends State<PatronScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
+                if (_onayOzet != null && _onayOzet!.toplam > 0)
+                  FadeSlideIn(child: _buildOnayBanner(_onayOzet!)),
                 if (_error != null)
                   _buildErrorState()
                 else if (_isLoading)
@@ -154,6 +174,78 @@ class _PatronScreenState extends State<PatronScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ─── Onay bekleyenler banner'ı ───
+  Widget _buildOnayBanner(OnayOzet o) {
+    // Tür kırılımı metni (yalnızca dolu olanlar)
+    final parcalar = <String>[
+      if (o.fatura > 0) '${o.fatura} fatura',
+      if (o.siparis > 0) '${o.siparis} sipariş',
+      if (o.irsaliye > 0) '${o.irsaliye} irsaliye',
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const OnaylarScreen()))
+              .then((_) => _loadOnayOzet()),
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFFB45309), AppColors.warning],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.warning.withValues(alpha: 0.25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('${o.toplam}',
+                      style: AppTypography.h1
+                          .copyWith(color: Colors.white, fontSize: 20)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Onay bekleyen belge',
+                          style: AppTypography.h3
+                              .copyWith(color: Colors.white, fontSize: 15)),
+                      const SizedBox(height: 2),
+                      Text(parcalar.join(' · '),
+                          style: AppTypography.caption
+                              .copyWith(color: Colors.white70, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

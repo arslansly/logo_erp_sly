@@ -95,6 +95,7 @@ class Perm {
   static const viewPatronPanel = 'view_patron_panel';
   static const viewSahaPanel = 'view_saha_panel';
   static const createBelge = 'create_belge';
+  static const approveBelge = 'approve_belge';
   static const transferBelge = 'transfer_belge';
   static const deleteBelge = 'delete_belge';
   static const manageUsers = 'manage_users';
@@ -109,6 +110,7 @@ class Perm {
     viewPatronPanel,
     viewSahaPanel,
     createBelge,
+    approveBelge,
     transferBelge,
     deleteBelge,
     manageUsers,
@@ -124,6 +126,7 @@ class Perm {
     viewPatronPanel: 'Patron paneli (nakit, çek-senet, yaşlandırma)',
     viewSahaPanel: 'Saha paneli (satışçı: açık siparişler, riskli müşteriler)',
     createBelge: 'Belge oluştur (fatura/sipariş/irsaliye)',
+    approveBelge: 'Taslak onayla / reddet',
     transferBelge: "Belgeyi LOGO'ya aktar",
     deleteBelge: 'Belge / taslak sil',
     manageUsers: 'Kullanıcı yönetimi',
@@ -148,6 +151,7 @@ class Permissions {
   bool get canViewPatronPanel => has(Perm.viewPatronPanel);
   bool get canViewSahaPanel => has(Perm.viewSahaPanel);
   bool get canCreateBelge => has(Perm.createBelge);
+  bool get canApproveBelge => has(Perm.approveBelge);
   bool get canTransferBelge => has(Perm.transferBelge);
   bool get canDeleteBelge => has(Perm.deleteBelge);
   bool get canManageUsers => has(Perm.manageUsers);
