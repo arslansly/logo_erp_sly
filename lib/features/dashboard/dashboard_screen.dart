@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/fade_slide_in.dart';
+import '../../core/widgets/animated_count.dart';
 import '../../core/utils/formatters.dart';
 import 'dashboard_model.dart';
 import 'dashboard_service.dart';
@@ -30,7 +33,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hideBalance = false;  // ← YENİ
   String _userName = '';  // ← YENİ
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -83,14 +85,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 _buildHeader(),
                 // Şirket finansal panelleri (toplam alacak + KPI'lar) — yetkiye bağlı.
+                // Kartlar açılışta kademeli olarak içeri kayar (premium giriş hissi).
                 if (authService.perms.canViewDashboardFinancials) ...[
-                  _buildHeroCard(),
-                  _buildMiniKpis(),
+                  FadeSlideIn(child: _buildHeroCard()),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 80),
+                    child: _buildMiniKpis(),
+                  ),
                 ],
-                _buildQuickActions(),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 160),
+                  child: _buildQuickActions(),
+                ),
                 // Şirket raporları kısayolu — yetkiye bağlı.
-                if (authService.perms.canViewReports) _buildRaporlarKart(),
-                _buildSonHareketler(),
+                if (authService.perms.canViewReports)
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 240),
+                    child: _buildRaporlarKart(),
+                  ),
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 320),
+                  child: _buildSonHareketler(),
+                ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -426,18 +442,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            _isLoading
-                ? _buildShimmer(width: 200, height: 36)
-                : Text(
-              _hideBalance
-                  ? '₺ • • • • • • •'
-                  : Formatters.currency(_ozet?.toplamAlacak ?? 0),
-              style: AppTypography.display.copyWith(
-                color: Colors.white,
-                fontSize: 32,
-                letterSpacing: _hideBalance ? 4 : -0.8,
+            if (_isLoading)
+              _buildShimmer(width: 200, height: 36, onDark: true)
+            else if (_hideBalance)
+              Text(
+                '₺ • • • • • • •',
+                style: AppTypography.display.copyWith(
+                  color: Colors.white,
+                  fontSize: 32,
+                  letterSpacing: 4,
+                ),
+              )
+            else
+              AnimatedCount(
+                value: _ozet?.toplamAlacak ?? 0,
+                formatter: Formatters.currency,
+                style: AppTypography.display.copyWith(
+                  color: Colors.white,
+                  fontSize: 32,
+                  letterSpacing: -0.8,
+                ),
               ),
-            ),
             // Gerçek trend — backend'den (geçen aya göre net değişim).
             // Veri yoksa (trendYuzde == null) rozet hiç gösterilmez.
             if (!_isLoading && _ozet?.trendYuzde != null) ...[
@@ -496,16 +521,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── Mini KPI: Vadesi geçen + Bugün tahsilat ───
-  Widget _buildMiniKpis()
-
-  {
-
-
+  Widget _buildMiniKpis() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
         children: [
-
           Expanded(
             child: _buildMiniKpi(
               icon: Icons.warning_amber_rounded,
@@ -525,7 +545,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
           ),
-
           const SizedBox(width: 10),
           Expanded(
             child: _buildMiniKpi(
@@ -780,7 +799,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (_error != null)
             _buildErrorState()
           else if (_isLoading)
-            ...List.generate(3, (_) => _buildHareketShimmer())
+            _buildHareketlerSkeleton()
           else if (_hareketler == null || _hareketler!.isEmpty)
               _buildEmptyHareket()
             else
@@ -868,23 +887,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── Yardımcı widget'lar ───
-  Widget _buildShimmer({double width = 100, double height = 16}) {
-    return Container(
-      width: width, height: height,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
+  // Gerçek animasyonlu shimmer. `onDark` → koyu hero kartı için açık tonlar.
+  Widget _buildShimmer(
+      {double width = 100, double height = 16, bool onDark = false}) {
+    return Shimmer.fromColors(
+      baseColor: onDark
+          ? Colors.white.withValues(alpha: 0.18)
+          : AppColors.slate200,
+      highlightColor: onDark
+          ? Colors.white.withValues(alpha: 0.45)
+          : AppColors.slate100,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+        ),
       ),
     );
   }
 
-  Widget _buildHareketShimmer() {
+  // Son hareketler için satır yapısını taklit eden gerçek shimmer iskeleti.
+  Widget _buildHareketlerSkeleton() {
     return Container(
-      height: 64,
-      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.slate100,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
+      ),
+      child: Shimmer.fromColors(
+        baseColor: AppColors.slate200,
+        highlightColor: AppColors.slate100,
+        child: Column(
+          children: List.generate(3, (i) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 13,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Container(
+                          width: 90,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 56,
+                    height: 13,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ),
       ),
     );
   }

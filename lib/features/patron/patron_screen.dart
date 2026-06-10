@@ -3,6 +3,8 @@ import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/widgets/fade_slide_in.dart';
+import '../../core/widgets/animated_count.dart';
 import '../../core/utils/formatters.dart';
 import 'patron_model.dart';
 import 'patron_service.dart';
@@ -78,10 +80,19 @@ class _PatronScreenState extends State<PatronScreen> {
                 else if (_isLoading)
                   _buildSkeleton()
                 else ...[
-                  _buildNetHero(),
-                  _buildYaslandirma(),
-                  _buildNakitBanka(),
-                  _buildCekSenet(),
+                  FadeSlideIn(child: _buildNetHero()),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 80),
+                    child: _buildYaslandirma(),
+                  ),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 160),
+                    child: _buildNakitBanka(),
+                  ),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 240),
+                    child: _buildCekSenet(),
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -176,14 +187,25 @@ class _PatronScreenState extends State<PatronScreen> {
                 style: AppTypography.caption
                     .copyWith(color: Colors.white70, fontSize: 13)),
             const SizedBox(height: 4),
-            Text(
-              _money(o.netBakiye),
-              style: AppTypography.display.copyWith(
-                color: Colors.white,
-                fontSize: 32,
-                letterSpacing: _hideBalance ? 4 : -0.8,
+            if (_hideBalance)
+              Text(
+                _money(o.netBakiye),
+                style: AppTypography.display.copyWith(
+                  color: Colors.white,
+                  fontSize: 32,
+                  letterSpacing: 4,
+                ),
+              )
+            else
+              AnimatedCount(
+                value: o.netBakiye,
+                formatter: Formatters.currency,
+                style: AppTypography.display.copyWith(
+                  color: Colors.white,
+                  fontSize: 32,
+                  letterSpacing: -0.8,
+                ),
               ),
-            ),
             if (o.trendYuzde != null) ...[
               const SizedBox(height: 12),
               _buildTrendChip(o.trendYuzde!),

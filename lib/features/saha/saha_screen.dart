@@ -3,6 +3,8 @@ import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/widgets/fade_slide_in.dart';
+import '../../core/widgets/animated_count.dart';
 import '../../core/utils/formatters.dart';
 import '../cari/cari_detay_screen.dart';
 import '../siparis/siparis_detay_screen.dart';
@@ -121,10 +123,20 @@ class _SahaScreenState extends State<SahaScreen> {
                 else if (_loadingScoped)
                   _buildSkeleton()
                 else ...[
-                  _buildOzetHero(),
-                  if ((_ozet?.limitAsanSayisi ?? 0) > 0) _buildLimitAsanBanner(),
-                  _buildAcikSiparislerSection(),
-                  _buildRiskliCarilerSection(),
+                  FadeSlideIn(child: _buildOzetHero()),
+                  if ((_ozet?.limitAsanSayisi ?? 0) > 0)
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 80),
+                      child: _buildLimitAsanBanner(),
+                    ),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 160),
+                    child: _buildAcikSiparislerSection(),
+                  ),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 240),
+                    child: _buildRiskliCarilerSection(),
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -295,9 +307,9 @@ class _SahaScreenState extends State<SahaScreen> {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                Formatters.currency(o.acikSiparisTutar),
-                maxLines: 1,
+              child: AnimatedCount(
+                value: o.acikSiparisTutar,
+                formatter: Formatters.currency,
                 style: AppTypography.display.copyWith(
                   color: Colors.white,
                   fontSize: 30,
