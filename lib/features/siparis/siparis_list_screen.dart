@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/onay_rozeti.dart';
 import '../auth/auth_service.dart';
 import 'siparis_detay_screen.dart';
 import 'siparis_form_screen.dart';
@@ -674,6 +675,13 @@ class _SiparisCard extends StatelessWidget {
                       ),
                     ],
                   ],
+                ),
+              ],
+              if (item.isDraft && item.approvalStatus != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OnayRozeti(status: item.approvalStatus),
                 ),
               ],
               if (mode == _ListMode.hatali && item.lastError != null) ...[

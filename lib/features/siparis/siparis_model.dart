@@ -117,6 +117,7 @@ class SiparisModel {
   final bool isDraft;
   final String draftStatus; // 'Draft' | 'Transferred' | 'Failed'
   final String? lastError;
+  final String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
 
   SiparisModel({
     required this.id,
@@ -139,6 +140,7 @@ class SiparisModel {
     this.isDraft = false,
     this.draftStatus = '',
     this.lastError,
+    this.approvalStatus,
   });
 
   factory SiparisModel.fromJson(Map<String, dynamic> json) => SiparisModel(
@@ -162,6 +164,7 @@ class SiparisModel {
         isDraft: json['isDraft'] as bool? ?? false,
         draftStatus: json['draftStatus'] as String? ?? '',
         lastError: json['lastError'] as String?,
+        approvalStatus: json['approvalStatus'] as String?,
       );
 
   SiparisTuru? get tur => SiparisTuru.fromTrCode(trCode);
@@ -192,6 +195,10 @@ class SiparisModel {
   bool get isKapali => closed != 0;
   bool get isIptal => cancelled != 0;
   bool get isTaslak => isDraft && draftStatus == 'Draft';
+  // Onay durumu — yalnızca taslakta anlamlı
+  bool get isOnayBekliyor => isDraft && approvalStatus == 'Pending';
+  bool get isOnaylandi => isDraft && approvalStatus == 'Approved';
+  bool get isReddedildi => isDraft && approvalStatus == 'Rejected';
   bool get isAktarildi => !isDraft || draftStatus == 'Transferred';
   bool get isHatali => isDraft && draftStatus == 'Failed';
 }

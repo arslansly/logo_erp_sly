@@ -68,6 +68,7 @@ class FaturaModel {
   final bool isDraft;
   final String draftStatus; // 'Draft' | 'Transferred' | 'Failed'
   final String? lastError;
+  final String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
 
   FaturaModel({
     required this.id,
@@ -87,6 +88,7 @@ class FaturaModel {
     this.isDraft = false,
     this.draftStatus = '',
     this.lastError,
+    this.approvalStatus,
   });
 
   factory FaturaModel.fromJson(Map<String, dynamic> json) => FaturaModel(
@@ -107,10 +109,15 @@ class FaturaModel {
         isDraft: json['isDraft'] as bool? ?? false,
         draftStatus: json['draftStatus'] as String? ?? '',
         lastError: json['lastError'] as String?,
+        approvalStatus: json['approvalStatus'] as String?,
       );
 
   FaturaTuru? get tur => FaturaTuru.fromTrCode(trCode);
   bool get isTaslak => isDraft && draftStatus == 'Draft';
+  // Onay durumu — yalnızca taslakta anlamlı
+  bool get isOnayBekliyor => isDraft && approvalStatus == 'Pending';
+  bool get isOnaylandi => isDraft && approvalStatus == 'Approved';
+  bool get isReddedildi => isDraft && approvalStatus == 'Rejected';
   bool get isAktarildi => !isDraft || draftStatus == 'Transferred';
   bool get isHatali => isDraft && draftStatus == 'Failed';
   bool get isIptal => cancelled != 0;

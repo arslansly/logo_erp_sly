@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/onay_rozeti.dart';
 import '../auth/auth_service.dart';
 import 'irsaliye_detay_screen.dart';
 import 'irsaliye_form_screen.dart';
@@ -733,6 +734,13 @@ class _IrsaliyeCard extends StatelessWidget {
                               .copyWith(color: AppColors.slate500)),
                     ],
                   ],
+                ),
+              ],
+              if (item.isDraft && item.approvalStatus != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OnayRozeti(status: item.approvalStatus),
                 ),
               ],
               if (mode == _ListMode.hatali && item.lastError != null) ...[

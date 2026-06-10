@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/onay_rozeti.dart';
 import '../auth/auth_service.dart';
 import 'fatura_detay_screen.dart';
 import 'fatura_form_screen.dart';
@@ -604,6 +605,13 @@ class _FaturaKarti extends StatelessWidget {
                   ),
                 ],
               ),
+              if (fatura.isDraft && fatura.approvalStatus != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OnayRozeti(status: fatura.approvalStatus),
+                ),
+              ],
               if (mode == _ListMode.hatali && fatura.lastError != null) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Container(

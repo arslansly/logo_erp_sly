@@ -30,7 +30,9 @@ Son güncelleme: 2026-06-10 (Demo cilası + Satış performans raporu + Onay iş
 4. Patron → **Raporlar → Satış Performansı**: ciro hero sayar, aylık bar grafiğe dokun, satışçı/müşteri listeleri.
 5. Satışçı ile bir taslak fatura/sipariş kes (Pending olur) → Patron'la gir → Patron panelinde **"Onay bekleyen belge" banner'ı** → Onaylar → onayla/reddet → liste güncellenir.
 
-**Sıradaki (opsiyonel):** taslak liste kartlarına "Onaylandı/Reddedildi" rozeti; onay gerektiren taslağın aktarımını onaya bağlama (transfer zaten stub); LOGO'ya gerçek aktarım; HTTPS/güvenlik.
+**④ Taslak kartı onay rozeti (backend + Flutter, aynı tur eklendi):** 3 taslak DTO'suna (`Fatura`/`Siparis`/`Irsaliye`) `ApprovalStatus` alanı + 3 draft servisin GetAll SELECT'ine `d.ApprovalStatus`; Flutter 3 modele `approvalStatus` + `isOnayBekliyor/isOnaylandi/isReddedildi` getter'ları; YENİ `lib/core/widgets/onay_rozeti.dart` (`OnayRozeti` — Onay bekliyor/Onaylandı/Reddedildi pill'i); fatura/sipariş/irsaliye liste kartlarında taslakta gösterilir.
+
+**Sıradaki (opsiyonel):** onaylanmamış taslağın LOGO'ya aktarımını onaya bağlama (transfer zaten stub); LOGO'ya gerçek aktarım; HTTPS/güvenlik.
 
 ---
 

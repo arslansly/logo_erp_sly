@@ -58,6 +58,7 @@ class IrsaliyeModel {
   final bool isDraft;
   final String draftStatus; // 'Draft' | 'Transferred' | 'Failed'
   final String? lastError;
+  final String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
 
   IrsaliyeModel({
     required this.id,
@@ -77,6 +78,7 @@ class IrsaliyeModel {
     this.isDraft = false,
     this.draftStatus = '',
     this.lastError,
+    this.approvalStatus,
   });
 
   factory IrsaliyeModel.fromJson(Map<String, dynamic> json) => IrsaliyeModel(
@@ -97,12 +99,17 @@ class IrsaliyeModel {
         isDraft: json['isDraft'] as bool? ?? false,
         draftStatus: json['draftStatus'] as String? ?? '',
         lastError: json['lastError'] as String?,
+        approvalStatus: json['approvalStatus'] as String?,
       );
 
   IrsaliyeTuru? get tur => IrsaliyeTuru.fromTrCode(trCode);
   bool get isFaturalandi => billed != 0;
   bool get isIptal => cancelled != 0;
   bool get isTaslak => isDraft && draftStatus == 'Draft';
+  // Onay durumu — yalnızca taslakta anlamlı
+  bool get isOnayBekliyor => isDraft && approvalStatus == 'Pending';
+  bool get isOnaylandi => isDraft && approvalStatus == 'Approved';
+  bool get isReddedildi => isDraft && approvalStatus == 'Rejected';
   bool get isAktarildi => !isDraft || draftStatus == 'Transferred';
   bool get isHatali => isDraft && draftStatus == 'Failed';
 }
