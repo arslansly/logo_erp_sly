@@ -4,6 +4,7 @@ import '../../core/pdf/belge_pdf.dart';
 import '../../core/pdf/belge_onizleme_screen.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/widgets/onay_rozeti.dart';
 import '../../core/theme/app_typography.dart';
 import '../auth/auth_service.dart';
 import '../irsaliye/irsaliye_detay_screen.dart';
@@ -271,12 +272,24 @@ class _FaturaDetayScreenState extends State<FaturaDetayScreen> {
           _HataKart(mesaj: t.lastError!),
         ],
         const SizedBox(height: AppSpacing.md),
+        // Onay durumu rozeti + reddedildiyse gerekçe (satışçı görsün).
+        if (t.approvalStatus != null) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OnayRozeti(status: t.approvalStatus),
+          ),
+          if (t.isReddedildi && (t.rejectReason?.isNotEmpty ?? false)) ...[
+            const SizedBox(height: AppSpacing.sm),
+            RedGerekceKutusu(gerekce: t.rejectReason!),
+          ],
+          const SizedBox(height: AppSpacing.md),
+        ],
         _AksiyonBar(
           onPdf: null,
           onShare: null,
           onEdit: () => _editTaslak(t.id!),
-          // "LOGO'ya Aktar" — aktarma yetkisi yoksa gizli.
-          onTransfer: authService.perms.canTransferBelge
+          // "LOGO'ya Aktar" — yalnızca patron onayı geçmiş taslakta görünür.
+          onTransfer: authService.perms.canTransferBelge && t.isOnaylandi
               ? () => _transferTaslak(t.id!)
               : null,
         ),

@@ -69,6 +69,7 @@ class FaturaModel {
   final String draftStatus; // 'Draft' | 'Transferred' | 'Failed'
   final String? lastError;
   final String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
+  final String? rejectReason; // reddedildiyse gerekçe
 
   FaturaModel({
     required this.id,
@@ -89,6 +90,7 @@ class FaturaModel {
     this.draftStatus = '',
     this.lastError,
     this.approvalStatus,
+    this.rejectReason,
   });
 
   factory FaturaModel.fromJson(Map<String, dynamic> json) => FaturaModel(
@@ -110,6 +112,7 @@ class FaturaModel {
         draftStatus: json['draftStatus'] as String? ?? '',
         lastError: json['lastError'] as String?,
         approvalStatus: json['approvalStatus'] as String?,
+        rejectReason: json['rejectReason'] as String?,
       );
 
   FaturaTuru? get tur => FaturaTuru.fromTrCode(trCode);
@@ -344,6 +347,8 @@ class FaturaTaslakModel {
   int? transferredInvoiceId;
   DateTime? transferredAt;
   String? lastError;
+  String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
+  String? rejectReason;
   String createdBy;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -376,6 +381,8 @@ class FaturaTaslakModel {
     this.transferredInvoiceId,
     this.transferredAt,
     this.lastError,
+    this.approvalStatus,
+    this.rejectReason,
     this.createdBy = '',
     this.createdAt,
     this.updatedAt,
@@ -410,6 +417,8 @@ class FaturaTaslakModel {
             ? DateTime.parse(json['transferredAt'] as String)
             : null,
         lastError: json['lastError'] as String?,
+        approvalStatus: json['approvalStatus'] as String?,
+        rejectReason: json['rejectReason'] as String?,
         createdBy: json['createdBy'] as String? ?? '',
         createdAt: (json['createdAt'] as String?) != null
             ? DateTime.parse(json['createdAt'] as String)
@@ -422,6 +431,11 @@ class FaturaTaslakModel {
                 FaturaTaslakSatirModel.fromJson(j as Map<String, dynamic>))
             .toList(),
       );
+
+  // Onay durumu — aktarım yalnızca onaylanınca açılır.
+  bool get isOnaylandi => approvalStatus == 'Approved';
+  bool get isReddedildi => approvalStatus == 'Rejected';
+  bool get isOnayBekliyor => approvalStatus == 'Pending';
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,

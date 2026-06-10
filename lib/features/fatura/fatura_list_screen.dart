@@ -612,6 +612,11 @@ class _FaturaKarti extends StatelessWidget {
                   child: OnayRozeti(status: fatura.approvalStatus),
                 ),
               ],
+              // Reddedildiyse gerekçe — satışçı neden reddedildiğini görsün.
+              if (fatura.isReddedildi && (fatura.rejectReason?.isNotEmpty ?? false)) ...[
+                const SizedBox(height: AppSpacing.sm),
+                RedGerekceKutusu(gerekce: fatura.rejectReason!),
+              ],
               if (mode == _ListMode.hatali && fatura.lastError != null) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Container(
@@ -653,7 +658,9 @@ class _FaturaKarti extends StatelessWidget {
                       label: 'Düzenle',
                       onTap: onEdit,
                     ),
-                    if (authService.perms.canTransferBelge) ...[
+                    // Aktar/Tekrar Dene yalnızca patron onayı geçmiş taslakta.
+                    if (authService.perms.canTransferBelge &&
+                        fatura.isOnaylandi) ...[
                       const SizedBox(width: AppSpacing.sm),
                       _ActionBtn(
                         icon: mode == _ListMode.hatali

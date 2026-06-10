@@ -57,3 +57,45 @@ class OnayRozeti extends StatelessWidget {
     );
   }
 }
+
+/// Reddedilen taslakta gösterilen gerekçe kutusu — satışçı neden reddedildiğini görsün.
+class RedGerekceKutusu extends StatelessWidget {
+  final String gerekce;
+  const RedGerekceKutusu({super.key, required this.gerekce});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.negativeBg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.block_rounded, size: 15, color: AppColors.negative),
+          const SizedBox(width: 6),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.negative,
+                  fontSize: 11,
+                ),
+                children: [
+                  const TextSpan(
+                    text: 'Reddedildi: ',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: gerekce),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

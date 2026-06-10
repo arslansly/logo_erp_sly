@@ -118,6 +118,7 @@ class SiparisModel {
   final String draftStatus; // 'Draft' | 'Transferred' | 'Failed'
   final String? lastError;
   final String? approvalStatus; // 'Pending' | 'Approved' | 'Rejected'
+  final String? rejectReason; // reddedildiyse gerekçe
 
   SiparisModel({
     required this.id,
@@ -141,6 +142,7 @@ class SiparisModel {
     this.draftStatus = '',
     this.lastError,
     this.approvalStatus,
+    this.rejectReason,
   });
 
   factory SiparisModel.fromJson(Map<String, dynamic> json) => SiparisModel(
@@ -165,6 +167,7 @@ class SiparisModel {
         draftStatus: json['draftStatus'] as String? ?? '',
         lastError: json['lastError'] as String?,
         approvalStatus: json['approvalStatus'] as String?,
+        rejectReason: json['rejectReason'] as String?,
       );
 
   SiparisTuru? get tur => SiparisTuru.fromTrCode(trCode);

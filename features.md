@@ -32,7 +32,12 @@ Son güncelleme: 2026-06-10 (Demo cilası + Satış performans raporu + Onay iş
 
 **④ Taslak kartı onay rozeti (backend + Flutter, aynı tur eklendi):** 3 taslak DTO'suna (`Fatura`/`Siparis`/`Irsaliye`) `ApprovalStatus` alanı + 3 draft servisin GetAll SELECT'ine `d.ApprovalStatus`; Flutter 3 modele `approvalStatus` + `isOnayBekliyor/isOnaylandi/isReddedildi` getter'ları; YENİ `lib/core/widgets/onay_rozeti.dart` (`OnayRozeti` — Onay bekliyor/Onaylandı/Reddedildi pill'i); fatura/sipariş/irsaliye liste kartlarında taslakta gösterilir.
 
-**Sıradaki (opsiyonel):** onaylanmamış taslağın LOGO'ya aktarımını onaya bağlama (transfer zaten stub); LOGO'ya gerçek aktarım; HTTPS/güvenlik.
+**⑤ Onay kapısı + red gerekçesi (backend + Flutter, aynı tur):**
+- **Aktarım onaya bağlandı:** 3 draft servisin `TransferToLogoAsync`'ine `if (ApprovalStatus != 'Approved') → reddet` kapısı (backend zorlaması, defense-in-depth). 3 persistence modele (`InvoiceDraft`/`OrderDraft`/`ShipmentDraft`) `ApprovalStatus`+`RejectReason`. UI: liste kartlarında + fatura detayında "Aktar/Tekrar Dene" yalnızca `isOnaylandi` ise görünür (sipariş/irsaliye detayında zaten yok).
+- **Red gerekçesi satışçıya görünür:** 3 read DTO'ya (`Fatura`/`Siparis`/`Irsaliye`) + GetAll SELECT'lerine `RejectReason`; Flutter modellere `rejectReason`; YENİ `RedGerekceKutusu` (onay_rozeti.dart) liste kartlarında + fatura detayında reddedilen taslakta gerekçeyi gösterir.
+- **Red→düzelt→tekrar onay döngüsü:** 3 `UpdateAsync` artık düzenlemede `ApprovalStatus='Pending', RejectReason=NULL` yapar (reddedilen taslak düzenlenince tekrar onaya düşer).
+
+**Sıradaki (opsiyonel):** LOGO'ya gerçek aktarım (transfer hâlâ stub — onaylı belge artık kapıdan geçiyor ama yazım stub); HTTPS/güvenlik.
 
 ---
 

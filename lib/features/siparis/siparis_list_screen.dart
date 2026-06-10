@@ -684,6 +684,10 @@ class _SiparisCard extends StatelessWidget {
                   child: OnayRozeti(status: item.approvalStatus),
                 ),
               ],
+              if (item.isReddedildi && (item.rejectReason?.isNotEmpty ?? false)) ...[
+                const SizedBox(height: AppSpacing.sm),
+                RedGerekceKutusu(gerekce: item.rejectReason!),
+              ],
               if (mode == _ListMode.hatali && item.lastError != null) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Container(
@@ -722,7 +726,8 @@ class _SiparisCard extends StatelessWidget {
                         icon: Icons.edit_rounded,
                         label: 'Düzenle',
                         onTap: onEdit),
-                    if (authService.perms.canTransferBelge) ...[
+                    if (authService.perms.canTransferBelge &&
+                        item.isOnaylandi) ...[
                       const SizedBox(width: AppSpacing.sm),
                       _ActionBtn(
                         icon: mode == _ListMode.hatali
