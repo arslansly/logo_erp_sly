@@ -17,6 +17,7 @@ import '../fatura/fatura_list_screen.dart';
 import '../malzeme/malzeme_list_screen.dart';
 import '../rapor/rapor_hub_screen.dart';
 import '../ai/ai_chat_screen.dart';
+import '../tahsilat/tahsilat_liste_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -658,7 +659,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(child: _buildAction(
                 Icons.payments_outlined, 'Tahsilat',
                 AppColors.positiveBg, AppColors.positive,
-                onTap: () => _push(const BugunTahsilatlarScreen()),
+                onTap: () => _push(const TahsilatListeScreen()),
               )),
               const SizedBox(width: 8),
               Expanded(child: _buildAction(

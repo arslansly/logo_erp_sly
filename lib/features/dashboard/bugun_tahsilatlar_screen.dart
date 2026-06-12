@@ -4,6 +4,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import 'dashboard_model.dart';
 import 'dashboard_service.dart';
+import '../tahsilat/tahsilat_giris_screen.dart';
 
 class BugunTahsilatlarScreen extends StatefulWidget {
   const BugunTahsilatlarScreen({super.key});
@@ -41,6 +42,20 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            tooltip: 'Yeni tahsilat',
+            onPressed: () async {
+              final eklendi = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const TahsilatGirisScreen()),
+              );
+              if (eklendi == true && mounted) _refresh();
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
