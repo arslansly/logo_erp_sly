@@ -333,6 +333,14 @@ class TahsilatRaporu {
   final int fisSayisi;
   final int bekleyenSayi;
   final int onayliSayi;
+  // Logo'ya akmış (kesin) net tahsilat
+  final double netAktarilan;
+  final int aktarilanSayi;
+  // Onaylı ama Logo'ya akmamış (öngörü)
+  final double netAkmamis;
+  final int akmamisSayi;
+  // Aktarımlar tamamlanınca beklenen net (= netAktarilan + netAkmamis)
+  final double beklenenNet;
   final List<TahsilatSatisci> satiscilar;
   final List<GunlukTahsilat> gunlukTrend;
 
@@ -345,6 +353,11 @@ class TahsilatRaporu {
     required this.fisSayisi,
     required this.bekleyenSayi,
     required this.onayliSayi,
+    required this.netAktarilan,
+    required this.aktarilanSayi,
+    required this.netAkmamis,
+    required this.akmamisSayi,
+    required this.beklenenNet,
     required this.satiscilar,
     required this.gunlukTrend,
   });
@@ -360,6 +373,11 @@ class TahsilatRaporu {
         fisSayisi: (json['fisSayisi'] as num?)?.toInt() ?? 0,
         bekleyenSayi: (json['bekleyenSayi'] as num?)?.toInt() ?? 0,
         onayliSayi: (json['onayliSayi'] as num?)?.toInt() ?? 0,
+        netAktarilan: (json['netAktarilan'] as num?)?.toDouble() ?? 0.0,
+        aktarilanSayi: (json['aktarilanSayi'] as num?)?.toInt() ?? 0,
+        netAkmamis: (json['netAkmamis'] as num?)?.toDouble() ?? 0.0,
+        akmamisSayi: (json['akmamisSayi'] as num?)?.toInt() ?? 0,
+        beklenenNet: (json['beklenenNet'] as num?)?.toDouble() ?? 0.0,
         satiscilar: (json['satiscilar'] as List<dynamic>? ?? [])
             .map((j) => TahsilatSatisci.fromJson(j as Map<String, dynamic>))
             .toList(),

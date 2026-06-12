@@ -10,8 +10,9 @@ import 'rapor_service.dart';
 import 'rapor_widgets.dart';
 
 /// Tahsilat raporu — uygulamadan kesilen tahsilat/ödeme fişleri (CollectionDrafts)
-/// üzerinden: net tahsilat hero, tür (nakit/kart) kırılımı, satışçı leaderboard.
-/// Finansal rapor (backend: view_financial_reports).
+/// üzerinden. Hero = Logo'ya akmış (Transferred) GERÇEK net tahsilat; altında
+/// onaylı ama henüz akmamış (öngörü) kartı + beklenen net. Ayrıca tür (nakit/kart)
+/// kırılımı ve satışçı leaderboard. Finansal rapor (backend: view_financial_reports).
 class TahsilatRaporScreen extends StatefulWidget {
   const TahsilatRaporScreen({super.key});
 
@@ -169,15 +170,22 @@ class _TahsilatRaporScreenState extends State<TahsilatRaporScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Net Tahsilat (tahsilat − ödeme)',
-                  style: AppTypography.caption
-                      .copyWith(color: Colors.white70, fontSize: 13)),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded,
+                      color: Colors.white, size: 15),
+                  const SizedBox(width: 5),
+                  Text('Net Tahsilat · Logo\'ya işlendi',
+                      style: AppTypography.caption
+                          .copyWith(color: Colors.white70, fontSize: 13)),
+                ],
+              ),
               const SizedBox(height: 6),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: AnimatedCount(
-                  value: r.netTahsilat,
+                  value: r.netAktarilan,
                   formatter: Formatters.currency,
                   style: AppTypography.display.copyWith(
                     color: Colors.white,
@@ -187,12 +195,17 @@ class _TahsilatRaporScreenState extends State<TahsilatRaporScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('${r.fisSayisi} fiş · ${r.onayliSayi} onaylı · ${r.bekleyenSayi} bekleyen',
+              Text('${r.aktarilanSayi} fiş Logo\'ya aktarıldı · kesinleşti',
                   style: AppTypography.caption
                       .copyWith(color: Colors.white70, fontSize: 11)),
             ],
           ),
         ),
+        // Onaylı ama Logo'ya akmamış → öngörü (sadece varsa göster)
+        if (r.akmamisSayi > 0) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _buildAkmamisKart(r),
+        ],
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
@@ -216,6 +229,57 @@ class _TahsilatRaporScreenState extends State<TahsilatRaporScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  // ─── Onaylı ama Logo'ya akmamış (öngörü) kartı ───
+  Widget _buildAkmamisKart(TahsilatRaporu r) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.schedule_rounded,
+                  size: 16, color: AppColors.warning),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text('Onaylı · Logo\'ya akmamış',
+                    style: AppTypography.h3
+                        .copyWith(fontSize: 13.5, color: AppColors.warning)),
+              ),
+              Text(Formatters.currency(r.netAkmamis),
+                  style: AppTypography.h2
+                      .copyWith(fontSize: 17, color: AppColors.warning)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${r.akmamisSayi} fiş onaylandı ama henüz Logo\'ya işlenmedi · aktarılınca nete eklenecek',
+            style: AppTypography.caption
+                .copyWith(fontSize: 11, color: AppColors.slate600),
+          ),
+          const Divider(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Beklenen net (aktarılınca)',
+                  style: AppTypography.caption
+                      .copyWith(fontSize: 12, color: AppColors.slate600)),
+              Text(Formatters.currency(r.beklenenNet),
+                  style: AppTypography.h2
+                      .copyWith(fontSize: 16, color: AppColors.slate900)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
