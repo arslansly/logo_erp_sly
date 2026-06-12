@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
+import '../auth/auth_service.dart';
 import 'tahsilat_model.dart';
 import 'tahsilat_taslak_service.dart';
 import 'tahsilat_giris_screen.dart';
@@ -86,6 +87,20 @@ class _TahsilatListeScreenState extends State<TahsilatListeScreen> {
     if (sonuc == true) _yukle();
   }
 
+  // Onaylı taslağı LOGO'ya aktar (şu an backend'de stub — "henüz aktif değil" döner).
+  Future<void> _aktar(TahsilatTaslakModel t) async {
+    try {
+      final ficheId = await tahsilatTaslakService.transferTaslak(t.id!);
+      if (!mounted) return;
+      _bildir('LOGO\'ya aktarıldı (#$ficheId)', AppColors.positive);
+      _yukle();
+    } catch (e) {
+      if (!mounted) return;
+      _bildir('Aktarım başarısız: $e', AppColors.negative);
+      _yukle();
+    }
+  }
+
   Future<void> _sil(TahsilatTaslakModel t) async {
     try {
       await tahsilatTaslakService.deleteTaslak(t.id!);
@@ -164,6 +179,7 @@ class _TahsilatListeScreenState extends State<TahsilatListeScreen> {
         tahsilat: gosterilen[i],
         onDuzenle: () => _duzenle(gosterilen[i]),
         onSil: () => _sil(gosterilen[i]),
+        onAktar: () => _aktar(gosterilen[i]),
       ),
     );
   }
@@ -217,16 +233,23 @@ class _TahsilatKart extends StatelessWidget {
   final TahsilatTaslakModel tahsilat;
   final VoidCallback onDuzenle;
   final VoidCallback onSil;
+  final VoidCallback onAktar;
   const _TahsilatKart({
     required this.tahsilat,
     required this.onDuzenle,
     required this.onSil,
+    required this.onAktar,
   });
 
   // Aktarılmış kayıt silinemez/düzenlenemez; onaylanmış düzenlenemez.
   bool get _silinebilir => tahsilat.status != 'Transferred';
   bool get _duzenlenebilir =>
       tahsilat.status != 'Transferred' && !tahsilat.isOnaylandi;
+  // Aktar/Tekrar Dene yalnızca patron onayı geçmiş, henüz aktarılmamış taslakta.
+  bool get _aktarGoster =>
+      tahsilat.isOnaylandi &&
+      tahsilat.status != 'Transferred' &&
+      authService.perms.canTransferBelge;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +334,35 @@ class _TahsilatKart extends StatelessWidget {
                     'Ret gerekçesi: ${(tahsilat.rejectReason?.trim().isNotEmpty ?? false) ? tahsilat.rejectReason : 'Gerekçe belirtilmedi'}',
                     style: AppTypography.caption
                         .copyWith(color: AppColors.negative),
+                  ),
+                ),
+              ],
+              // LOGO'ya aktar / tekrar dene (onaylı taslak)
+              if (_aktarGoster) ...[
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onAktar,
+                    icon: Icon(
+                      tahsilat.status == 'Failed'
+                          ? Icons.refresh_rounded
+                          : Icons.cloud_upload_rounded,
+                      size: 18,
+                    ),
+                    label: Text(
+                      tahsilat.status == 'Failed'
+                          ? 'Tekrar Dene'
+                          : "LOGO'ya Aktar",
+                      style: AppTypography.button
+                          .copyWith(color: AppColors.positive),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.positive,
+                      side: const BorderSide(color: AppColors.positive),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
                 ),
               ],

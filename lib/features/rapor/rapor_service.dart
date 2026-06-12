@@ -123,6 +123,23 @@ class RaporService {
     }
   }
 
+  // Tahsilat raporu — uygulamadan kesilen tahsilat fişleri (dbo.CollectionDrafts).
+  Future<TahsilatRaporu> getTahsilatOzet({
+    DateTime? baslangic,
+    DateTime? bitis,
+  }) async {
+    try {
+      final params = <String, dynamic>{};
+      if (baslangic != null) params['baslangic'] = baslangic.toIso8601String();
+      if (bitis != null) params['bitis'] = bitis.toIso8601String();
+      final response = await _dio.get('/api/Rapor/tahsilat-ozet',
+          queryParameters: params);
+      return TahsilatRaporu.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.connectionError) {

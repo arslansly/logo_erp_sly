@@ -322,3 +322,85 @@ class MusteriCiro {
         adet: (json['adet'] as num?)?.toInt() ?? 0,
       );
 }
+
+// ─── Tahsilat raporu (dbo.CollectionDrafts bazlı) ───────────────────────────
+class TahsilatRaporu {
+  final double toplamTahsilat; // nakit + kart (giriş)
+  final double toplamOdeme; // ödemeler (çıkış)
+  final double netTahsilat;
+  final double nakitToplam;
+  final double kartToplam;
+  final int fisSayisi;
+  final int bekleyenSayi;
+  final int onayliSayi;
+  final List<TahsilatSatisci> satiscilar;
+  final List<GunlukTahsilat> gunlukTrend;
+
+  TahsilatRaporu({
+    required this.toplamTahsilat,
+    required this.toplamOdeme,
+    required this.netTahsilat,
+    required this.nakitToplam,
+    required this.kartToplam,
+    required this.fisSayisi,
+    required this.bekleyenSayi,
+    required this.onayliSayi,
+    required this.satiscilar,
+    required this.gunlukTrend,
+  });
+
+  bool get bos => fisSayisi == 0;
+
+  factory TahsilatRaporu.fromJson(Map<String, dynamic> json) => TahsilatRaporu(
+        toplamTahsilat: (json['toplamTahsilat'] as num?)?.toDouble() ?? 0.0,
+        toplamOdeme: (json['toplamOdeme'] as num?)?.toDouble() ?? 0.0,
+        netTahsilat: (json['netTahsilat'] as num?)?.toDouble() ?? 0.0,
+        nakitToplam: (json['nakitToplam'] as num?)?.toDouble() ?? 0.0,
+        kartToplam: (json['kartToplam'] as num?)?.toDouble() ?? 0.0,
+        fisSayisi: (json['fisSayisi'] as num?)?.toInt() ?? 0,
+        bekleyenSayi: (json['bekleyenSayi'] as num?)?.toInt() ?? 0,
+        onayliSayi: (json['onayliSayi'] as num?)?.toInt() ?? 0,
+        satiscilar: (json['satiscilar'] as List<dynamic>? ?? [])
+            .map((j) => TahsilatSatisci.fromJson(j as Map<String, dynamic>))
+            .toList(),
+        gunlukTrend: (json['gunlukTrend'] as List<dynamic>? ?? [])
+            .map((j) => GunlukTahsilat.fromJson(j as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+class TahsilatSatisci {
+  final String kullanici;
+  final double toplam;
+  final int adet;
+
+  TahsilatSatisci({
+    required this.kullanici,
+    required this.toplam,
+    required this.adet,
+  });
+
+  factory TahsilatSatisci.fromJson(Map<String, dynamic> json) => TahsilatSatisci(
+        kullanici: json['kullanici'] as String? ?? '',
+        toplam: (json['toplam'] as num?)?.toDouble() ?? 0.0,
+        adet: (json['adet'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class GunlukTahsilat {
+  final DateTime tarih;
+  final double toplam;
+  final int adet;
+
+  GunlukTahsilat({
+    required this.tarih,
+    required this.toplam,
+    required this.adet,
+  });
+
+  factory GunlukTahsilat.fromJson(Map<String, dynamic> json) => GunlukTahsilat(
+        tarih: DateTime.parse(json['tarih'] as String),
+        toplam: (json['toplam'] as num?)?.toDouble() ?? 0.0,
+        adet: (json['adet'] as num?)?.toInt() ?? 0,
+      );
+}

@@ -5,6 +5,7 @@ import '../../core/theme/app_typography.dart';
 import 'cari_bakiye_rapor_screen.dart';
 import 'kritik_stok_rapor_screen.dart';
 import 'satis_performans_rapor_screen.dart';
+import 'tahsilat_rapor_screen.dart';
 import 'stok_ambar_rapor_screen.dart';
 import 'stok_durum_rapor_screen.dart';
 import 'vade_rapor_screen.dart';
@@ -27,6 +28,14 @@ class RaporHubScreen extends StatelessWidget {
           ikon: Icons.trending_up_rounded,
           renk: AppColors.positive,
           ekran: const SatisPerformansRaporScreen(),
+        ),
+      if (authService.perms.canViewFinancialReports)
+        _RaporTanim(
+          baslik: 'Tahsilat Raporu',
+          aciklama: 'Net tahsilat, nakit/kart kırılımı ve satışçı bazlı tahsilat',
+          ikon: Icons.payments_rounded,
+          renk: AppColors.accent,
+          ekran: const TahsilatRaporScreen(),
         ),
       _RaporTanim(
         baslik: 'Cari Bakiye Raporu',
