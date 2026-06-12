@@ -74,6 +74,13 @@ class LogoMobilApp extends StatelessWidget {
         Locale('en', 'US'),
       ],
       locale: const Locale('tr', 'TR'),
+      // iOS sayı klavyesinde "Bitti" tuşu yoktur; her ekranda boş alana
+      // dokununca klavye kapansın diye kök widget'ı GestureDetector ile sarıyoruz.
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: child,
+      ),
       home: const LoginScreen(),  // ← Her zaman login ile başla
     );
   }

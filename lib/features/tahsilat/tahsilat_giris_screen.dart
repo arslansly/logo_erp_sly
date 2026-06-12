@@ -218,6 +218,7 @@ class _TahsilatGirisScreenState extends State<TahsilatGirisScreen> {
         title: Text(_editId != null ? 'Tahsilat Düzenle' : 'Tahsilat Fişi'),
       ),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(
             AppSpacing.md, AppSpacing.md, AppSpacing.md, 120),
         children: [
