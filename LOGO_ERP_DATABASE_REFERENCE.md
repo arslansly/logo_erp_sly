@@ -1096,4 +1096,93 @@ Asgari stok raporlarında `MINLEVELCTRL` alanı dikkate alınmaz. Logo bu alanı
 
 ---
 
+## 23. CARİ HESAP FİŞLERİ — LG_XXX_YY_CLFICHE & CLFLINE
+
+Firma + dönem bağımlı (Level=2). Cari hesaba **tahsilat / ödeme / dekont / virman**
+gibi para hareketlerini tutar. Fatura/irsaliye **dışındaki** cari hareketler buradadır.
+`CLFICHE` = fiş başlığı, `CLFLINE` = fiş satırları (borç/alacak hareketleri).
+
+### 23.1 Fiş Başlıkları — LG_XXX_YY_CLFICHE
+
+```sql
+LOGICALREF          (int)       -- Birincil anahtar
+FICHENO             (varchar)   -- Fiş numarası
+TRCODE              (int)       -- İşlem türü (aşağıya bakın) — raporda MUTLAKA filtrele
+DATE_               (datetime)  -- Fiş tarihi
+FTIME               (int)       -- Fiş saati (HHMMSS)
+CLIENTREF           (int)       -- Cari hesap ref. → LG_XXX_CLCARD.LOGICALREF
+ACCOUNTREF          (int)       -- Muhasebe hesap ref. (varsa)
+ACTIVE              (int)       -- 0=Aktif, 1=Pasif
+CANCELLED           (int)       -- 0=İptal değil, 1=İptal
+MODULENR            (int)       -- Kaynak modül numarası
+BRANCH              (int)       -- İşyeri numarası (firmaya göre zorunlu olabilir)
+DEPARTMENT          (int)       -- Bölüm numarası (firmaya göre zorunlu olabilir)
+DIVISION            (int)       -- Fabrika numarası
+NETTOTAL            (float)     -- Fiş net toplamı
+TOTALVAT            (float)     -- Toplam KDV (vade farkı/SMM fişlerinde)
+TRCURR              (int)       -- İşlem dövizi türü → L_CURRENCYLIST
+TRRATE              (float)     -- İşlem döviz kuru
+REPORTRATE          (float)     -- Raporlama döviz kuru
+GENEXP1..GENEXP6    (varchar)   -- Açıklama satırları
+DOCODE              (varchar)   -- Belge numarası
+CAPIBLOCK_CREADEDDATE   (datetime)  -- Oluşturulma tarihi
+CAPIBLOCK_MODIFIEDDATE  (datetime)  -- Değiştirilme tarihi
+```
+
+### 23.2 Fiş Satırları — LG_XXX_YY_CLFLINE
+
+```sql
+LOGICALREF          (int)       -- Birincil anahtar
+CLFICHEREF          (int)       -- Başlık ref. → CLFICHE.LOGICALREF
+CLIENTREF           (int)       -- Cari hesap ref. → CLCARD.LOGICALREF
+TRCODE              (int)       -- Satır işlem türü (başlıkla aynı)
+DATE_               (datetime)  -- Hareket tarihi
+MODULENR            (int)       -- Kaynak modül
+SIGN                (int)       -- 0 = Borç, 1 = Alacak  ⚠️ tahsilat=alacak, ödeme=borç
+TRANNO              (int)       -- Satır sıra no
+AMOUNT              (float)     -- İşlem dövizi tutarı
+TRRATE              (float)     -- Döviz kuru
+LINEEXP             (varchar)   -- Satır açıklaması
+```
+
+### 23.3 TRCODE Değerleri — CLFICHE / CLFLINE  [DOĞRULANDI]
+
+```
+1  = Nakit Tahsilat            (alacak — saha satışçısı ana işlemi)
+2  = Nakit Ödeme               (borç)
+3  = Borç Dekontu
+4  = Alacak Dekontu
+5  = Virman İşlemi
+6  = Kur Farkı İşlemi
+12 = Özel İşlem
+14 = Açılış İşlemi
+41 = Verilen Vade Farkı Faturası
+42 = Alınan Vade Farkı Faturası
+45 = Verilen Serbest Meslek Makbuzu
+46 = Alınan Serbest Meslek Makbuzu
+70 = Kredi Kartı Fişi          (POS ile tahsilat — saha için anlamlı)
+71 = Kredi Kartı İade Fişi
+72 = Firma Kredi Kartı Fişi
+73 = Firma Kredi Kartı İade Fişi
+```
+
+> **Saha tahsilat ekranı notu:** Satışçının fiilen keseceği türler pratikte
+> `1` (Nakit Tahsilat) ve `70` (Kredi Kartı Fişi). `2` (Nakit Ödeme) opsiyonel.
+> `3,4,5,6,12,14,41,42,45,46,71,72,73` muhasebe/merkez işlemleridir — saha
+> ekranında gösterilmez (ileride yetki bazlı açılabilir).
+>
+> **Çek/senet bu listede yoktur** — onlar ayrı modüldür (banka/çek-senet bordrosu),
+> CLFICHE'ye girmez. Saha tahsilatında çek alınacaksa ayrı ele alınmalı.
+
+### 23.4 Zorunlu Alanlar — Statik Değil, Logo'dan Öğrenilir
+
+Cari hesap fişinde **firmaya göre değişen** zorunluluklar vardır (BRANCH/DEPARTMENT
+zorunlu mu, özel alanlar var mı). Bu yüzden tahsilat fişi yazımında zorunlu alanlar
+**hardcode edilmez**; backend Logo REST'e probe (yoklama) yapıp dönen validation
+hatasından öğrenir ve `GET /api/CollectionDraft/schema?trcode=N` ile Flutter'a bildirir.
+Baseline (neredeyse her kurulumda ortak) zorunlu set: `TRCODE`, `CLIENTREF`,
+`DATE_`, `AMOUNT`. Döviz default TL (`TRCURR=0`).
+
+---
+
 *Bu döküman Logo Tiger 3 Enterprise platformu için hazırlanmıştır. Firma numarası ve dönem numarası sorgularda dinamik olarak değiştirilmelidir. Canlı sistemde doğrulanmış bilgiler `[DOĞRULANDI]` notu ile işaretlenmiştir.*

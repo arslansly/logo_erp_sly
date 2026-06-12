@@ -6,36 +6,42 @@ import '../../core/theme/app_colors.dart';
 enum OnayBelgeTip {
   fatura,
   siparis,
-  irsaliye;
+  irsaliye,
+  tahsilat;
 
   // Backend 'tip' string'i
   String get api => switch (this) {
         OnayBelgeTip.fatura => 'fatura',
         OnayBelgeTip.siparis => 'siparis',
         OnayBelgeTip.irsaliye => 'irsaliye',
+        OnayBelgeTip.tahsilat => 'tahsilat',
       };
 
   String get etiket => switch (this) {
         OnayBelgeTip.fatura => 'Fatura',
         OnayBelgeTip.siparis => 'Sipariş',
         OnayBelgeTip.irsaliye => 'İrsaliye',
+        OnayBelgeTip.tahsilat => 'Tahsilat',
       };
 
   IconData get ikon => switch (this) {
         OnayBelgeTip.fatura => Icons.receipt_long_rounded,
         OnayBelgeTip.siparis => Icons.shopping_cart_rounded,
         OnayBelgeTip.irsaliye => Icons.local_shipping_rounded,
+        OnayBelgeTip.tahsilat => Icons.payments_rounded,
       };
 
   Color get renk => switch (this) {
         OnayBelgeTip.fatura => AppColors.warning,
         OnayBelgeTip.siparis => AppColors.accent,
         OnayBelgeTip.irsaliye => AppColors.primary,
+        OnayBelgeTip.tahsilat => AppColors.positive,
       };
 
   static OnayBelgeTip fromApi(String? v) => switch (v) {
         'siparis' => OnayBelgeTip.siparis,
         'irsaliye' => OnayBelgeTip.irsaliye,
+        'tahsilat' => OnayBelgeTip.tahsilat,
         _ => OnayBelgeTip.fatura,
       };
 }
@@ -98,18 +104,21 @@ class OnayOzet {
   final int fatura;
   final int siparis;
   final int irsaliye;
+  final int tahsilat;
 
   OnayOzet({
     required this.fatura,
     required this.siparis,
     required this.irsaliye,
+    this.tahsilat = 0,
   });
 
-  int get toplam => fatura + siparis + irsaliye;
+  int get toplam => fatura + siparis + irsaliye + tahsilat;
 
   factory OnayOzet.fromJson(Map<String, dynamic> json) => OnayOzet(
         fatura: (json['fatura'] as num?)?.toInt() ?? 0,
         siparis: (json['siparis'] as num?)?.toInt() ?? 0,
         irsaliye: (json['irsaliye'] as num?)?.toInt() ?? 0,
+        tahsilat: (json['tahsilat'] as num?)?.toInt() ?? 0,
       );
 }

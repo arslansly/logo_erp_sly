@@ -5,6 +5,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../auth/auth_service.dart';
 import '../fatura/fatura_form_screen.dart';
+import '../tahsilat/tahsilat_giris_screen.dart';
 import 'cari_ekstre_screen.dart';
 import 'cari_hareket_model.dart';
 import 'cari_model.dart';
@@ -117,6 +118,19 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => FaturaFormScreen(onceSecilenCari: _cari),
+      ),
+    );
+  }
+
+  Future<void> _newTahsilat() async {
+    if (_cari == null) {
+      _showSnack('Cari bilgisi yüklenmedi');
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TahsilatGirisScreen(onceSecilenCari: _cari),
       ),
     );
   }
@@ -302,6 +316,8 @@ class _CariDetayScreenState extends State<CariDetayScreen> {
                 if (authService.perms.canCreateBelge) ...[
                   const SizedBox(width: 8),
                   Expanded(child: _buildActionBtn(Icons.receipt_long_rounded, 'Fatura', _newFatura)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildActionBtn(Icons.payments_rounded, 'Tahsilat', _newTahsilat)),
                 ],
               ],
             ),
