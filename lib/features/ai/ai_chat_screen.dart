@@ -223,6 +223,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
       body: Column(
         children: [
+          _buildDisclaimer(isDark),
           Expanded(
             child: _messages.isEmpty
                 ? _buildEmptyState(isDark)
@@ -237,6 +238,31 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   ),
           ),
           _buildInputBar(isDark),
+        ],
+      ),
+    );
+  }
+
+  // ─── Uyarı şeridi: yerel/ücretsiz model küçük olduğu için hata yapabilir ───
+  Widget _buildDisclaimer(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      color: (isDark ? AppColors.slate800 : AppColors.warning.withValues(alpha: 0.12)),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded,
+              size: 15, color: isDark ? AppColors.slate400 : AppColors.warning),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Yapay zeka deneme aşamasındadır; bazı cevaplarda hata yapabilir. '
+              'Önemli işlemleri kaydetmeden önce kontrol edin.',
+              style: AppTypography.caption.copyWith(
+                  color: isDark ? AppColors.slate400 : AppColors.slate600),
+            ),
+          ),
         ],
       ),
     );
