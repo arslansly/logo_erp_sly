@@ -41,6 +41,26 @@ class DashboardService {
     }
   }
 
+  // LOGO'daki gerçek tahsilat/ödeme hareketleri (CLFLINE) — tarih aralıklı, salt-okunur.
+  Future<List<SonHareket>> getLogoTahsilatlar({
+    DateTime? baslangic,
+    DateTime? bitis,
+  }) async {
+    try {
+      final params = <String, dynamic>{};
+      if (baslangic != null) params['baslangic'] = baslangic.toIso8601String();
+      if (bitis != null) params['bitis'] = bitis.toIso8601String();
+      final response = await _dio.get('/api/Dashboard/logo-tahsilatlar',
+          queryParameters: params);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((j) => SonHareket.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<List<VadesiGecenCari>> getVadesiGecenCariler() async {
     try {
       final response = await _dio.get('/api/Dashboard/vadesi-gecen-cariler');

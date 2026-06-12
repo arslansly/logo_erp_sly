@@ -16,18 +16,31 @@ class BugunTahsilatlarScreen extends StatefulWidget {
 
 class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
   late Future<List<SonHareket>> _future;
+  _TahsilatDonem _donem = _TahsilatDonem.bugun;
 
   @override
   void initState() {
     super.initState();
-    _future = dashboardService.getBugunTahsilatlar();
+    _future = _yukle();
+  }
+
+  // LOGO'daki gerçek tahsilatları seçili döneme göre çeker (salt-okunur).
+  Future<List<SonHareket>> _yukle() {
+    final (bas, bit) = _donem.aralik;
+    return dashboardService.getLogoTahsilatlar(baslangic: bas, bitis: bit);
   }
 
   Future<void> _refresh() async {
-    setState(() {
-      _future = dashboardService.getBugunTahsilatlar();
-    });
+    setState(() => _future = _yukle());
     await _future;
+  }
+
+  void _donemSec(_TahsilatDonem d) {
+    if (d == _donem) return;
+    setState(() {
+      _donem = d;
+      _future = _yukle();
+    });
   }
 
   @override
@@ -36,7 +49,7 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Bugün tahsilat',
+          'Tahsilatlar',
           style: AppTypography.h1.copyWith(fontSize: 20),
         ),
         backgroundColor: AppColors.surface,
@@ -56,6 +69,10 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
             },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(52),
+          child: _TahsilatDonemBari(secili: _donem, onSec: _donemSec),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
@@ -150,7 +167,7 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
                   color: Colors.white70, size: 20),
               const SizedBox(width: 6),
               Text(
-                'Bugün toplam tahsilat',
+                'Dönem toplam tahsilat',
                 style: AppTypography.caption.copyWith(
                   color: Colors.white70,
                   fontSize: 13,
@@ -318,7 +335,7 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Bugün henüz tahsilat fişi girilmemiş.',
+                'Bu dönemde LOGO\'da tahsilat hareketi yok.',
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.slate500,
                 ),
@@ -327,6 +344,75 @@ class _BugunTahsilatlarScreenState extends State<BugunTahsilatlarScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─── Tarih dönemi seçici ─────────────────────────────────────────────────────
+enum _TahsilatDonem { bugun, yediGun, otuzGun, buAy }
+
+extension _TahsilatDonemX on _TahsilatDonem {
+  String get etiket => switch (this) {
+        _TahsilatDonem.bugun => 'Bugün',
+        _TahsilatDonem.yediGun => '7 Gün',
+        _TahsilatDonem.otuzGun => '30 Gün',
+        _TahsilatDonem.buAy => 'Bu Ay',
+      };
+
+  (DateTime bas, DateTime bit) get aralik {
+    final now = DateTime.now();
+    final bugun = DateTime(now.year, now.month, now.day);
+    return switch (this) {
+      _TahsilatDonem.bugun => (bugun, bugun),
+      _TahsilatDonem.yediGun => (bugun.subtract(const Duration(days: 6)), bugun),
+      _TahsilatDonem.otuzGun =>
+        (bugun.subtract(const Duration(days: 29)), bugun),
+      _TahsilatDonem.buAy => (DateTime(now.year, now.month, 1), bugun),
+    };
+  }
+}
+
+class _TahsilatDonemBari extends StatelessWidget {
+  final _TahsilatDonem secili;
+  final ValueChanged<_TahsilatDonem> onSec;
+  const _TahsilatDonemBari({required this.secili, required this.onSec});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 52,
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: _TahsilatDonem.values.map((d) {
+          final aktif = d == secili;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => onSec(d),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: aktif ? AppColors.accent : AppColors.slate100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    d.etiket,
+                    style: AppTypography.caption.copyWith(
+                      color: aktif ? Colors.white : AppColors.slate500,
+                      fontWeight:
+                          aktif ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

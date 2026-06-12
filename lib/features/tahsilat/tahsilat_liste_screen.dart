@@ -6,6 +6,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../auth/auth_service.dart';
+import '../dashboard/bugun_tahsilatlar_screen.dart';
 import 'tahsilat_model.dart';
 import 'tahsilat_taslak_service.dart';
 import 'tahsilat_giris_screen.dart';
@@ -130,6 +131,17 @@ class _TahsilatListeScreenState extends State<TahsilatListeScreen> {
         titleTextStyle: AppTypography.h2,
         foregroundColor: AppColors.slate900,
         title: const Text('Tahsilat Fişleri'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_balance_rounded),
+            tooltip: 'LOGO\'daki tahsilatlar',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const BugunTahsilatlarScreen()),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: _FiltreBari(
