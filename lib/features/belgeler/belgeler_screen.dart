@@ -6,6 +6,7 @@ import '../fatura/fatura_list_screen.dart';
 import '../irsaliye/irsaliye_list_screen.dart';
 import '../siparis/siparis_list_screen.dart';
 import '../tahsilat/tahsilat_liste_screen.dart';
+import '../masraf/masraf_liste_screen.dart';
 
 /// Belgeler şemsiye ekranı — Fatura/İrsaliye/Sipariş kartları.
 class BelgelerScreen extends StatelessWidget {
@@ -74,6 +75,19 @@ class BelgelerScreen extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const TahsilatListeScreen()),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _BelgeKarti(
+            icon: Icons.account_balance_wallet_rounded,
+            iconColor: AppColors.negative,
+            iconBg: AppColors.negative.withValues(alpha: 0.12),
+            baslik: 'Masraflar',
+            altyazi: 'Saha gider fişleri (benzin, otopark…)',
+            aktif: true,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MasrafListeScreen()),
             ),
           ),
         ],

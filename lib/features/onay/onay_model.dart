@@ -7,7 +7,8 @@ enum OnayBelgeTip {
   fatura,
   siparis,
   irsaliye,
-  tahsilat;
+  tahsilat,
+  masraf;
 
   // Backend 'tip' string'i
   String get api => switch (this) {
@@ -15,6 +16,7 @@ enum OnayBelgeTip {
         OnayBelgeTip.siparis => 'siparis',
         OnayBelgeTip.irsaliye => 'irsaliye',
         OnayBelgeTip.tahsilat => 'tahsilat',
+        OnayBelgeTip.masraf => 'masraf',
       };
 
   String get etiket => switch (this) {
@@ -22,6 +24,7 @@ enum OnayBelgeTip {
         OnayBelgeTip.siparis => 'Sipariş',
         OnayBelgeTip.irsaliye => 'İrsaliye',
         OnayBelgeTip.tahsilat => 'Tahsilat',
+        OnayBelgeTip.masraf => 'Masraf',
       };
 
   IconData get ikon => switch (this) {
@@ -29,6 +32,7 @@ enum OnayBelgeTip {
         OnayBelgeTip.siparis => Icons.shopping_cart_rounded,
         OnayBelgeTip.irsaliye => Icons.local_shipping_rounded,
         OnayBelgeTip.tahsilat => Icons.payments_rounded,
+        OnayBelgeTip.masraf => Icons.account_balance_wallet_rounded,
       };
 
   Color get renk => switch (this) {
@@ -36,12 +40,14 @@ enum OnayBelgeTip {
         OnayBelgeTip.siparis => AppColors.accent,
         OnayBelgeTip.irsaliye => AppColors.primary,
         OnayBelgeTip.tahsilat => AppColors.positive,
+        OnayBelgeTip.masraf => AppColors.negative,
       };
 
   static OnayBelgeTip fromApi(String? v) => switch (v) {
         'siparis' => OnayBelgeTip.siparis,
         'irsaliye' => OnayBelgeTip.irsaliye,
         'tahsilat' => OnayBelgeTip.tahsilat,
+        'masraf' => OnayBelgeTip.masraf,
         _ => OnayBelgeTip.fatura,
       };
 }
@@ -105,20 +111,23 @@ class OnayOzet {
   final int siparis;
   final int irsaliye;
   final int tahsilat;
+  final int masraf;
 
   OnayOzet({
     required this.fatura,
     required this.siparis,
     required this.irsaliye,
     this.tahsilat = 0,
+    this.masraf = 0,
   });
 
-  int get toplam => fatura + siparis + irsaliye + tahsilat;
+  int get toplam => fatura + siparis + irsaliye + tahsilat + masraf;
 
   factory OnayOzet.fromJson(Map<String, dynamic> json) => OnayOzet(
         fatura: (json['fatura'] as num?)?.toInt() ?? 0,
         siparis: (json['siparis'] as num?)?.toInt() ?? 0,
         irsaliye: (json['irsaliye'] as num?)?.toInt() ?? 0,
         tahsilat: (json['tahsilat'] as num?)?.toInt() ?? 0,
+        masraf: (json['masraf'] as num?)?.toInt() ?? 0,
       );
 }

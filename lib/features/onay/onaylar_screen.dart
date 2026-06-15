@@ -5,6 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/fade_slide_in.dart';
+import '../masraf/masraf_receipt_image.dart';
 import 'onay_model.dart';
 import 'onay_service.dart';
 
@@ -357,15 +358,19 @@ class _OnayKart extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: veri.tip.renk.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+              // Masraf fişinde fiş fotoğrafı önizlemesi; diğerlerinde tür ikonu.
+              if (veri.tip == OnayBelgeTip.masraf)
+                MasrafReceiptImage(masrafId: veri.id, size: 44, borderRadius: 12)
+              else
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: veri.tip.renk.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(veri.tip.ikon, color: veri.tip.renk, size: 20),
                 ),
-                child: Icon(veri.tip.ikon, color: veri.tip.renk, size: 20),
-              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

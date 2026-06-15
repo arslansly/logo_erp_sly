@@ -185,6 +185,8 @@ class _PatronScreenState extends State<PatronScreen> {
       if (o.fatura > 0) '${o.fatura} fatura',
       if (o.siparis > 0) '${o.siparis} sipariş',
       if (o.irsaliye > 0) '${o.irsaliye} irsaliye',
+      if (o.tahsilat > 0) '${o.tahsilat} tahsilat',
+      if (o.masraf > 0) '${o.masraf} masraf',
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),

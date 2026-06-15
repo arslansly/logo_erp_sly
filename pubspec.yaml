@@ -40,6 +40,7 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
+  image_picker: ^1.1.2   # ← YENİ (masraf fiş fotoğrafı çekme/yükleme)
   pdf: ^3.11.0
   printing: ^5.13.0
   speech_to_text: ^7.0.0   # ← YENİ (AI asistanı sesli giriş)
