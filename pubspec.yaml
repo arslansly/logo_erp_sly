@@ -44,6 +44,7 @@ dependencies:
   pdf: ^3.11.0
   printing: ^5.13.0
   speech_to_text: ^7.0.0   # ← YENİ (AI asistanı sesli giriş)
+  mobile_scanner: ^5.0.0   # ← YENİ (barkod / QR okuyucu)
 
 dev_dependencies:
   flutter_test:

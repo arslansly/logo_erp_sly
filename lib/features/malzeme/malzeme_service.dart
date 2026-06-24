@@ -66,6 +66,17 @@ class MalzemeService {
     }
   }
 
+  // Barkod numarasına göre malzeme arar; bulunamazsa null döner.
+  Future<Malzeme?> getMalzemeByBarkod(String barkod) async {
+    try {
+      final response = await _dio.get('/api/Malzeme/barkod/$barkod');
+      return Malzeme.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw _handleError(e);
+    }
+  }
+
   // Malzeme kart resminin tam URL'i — CachedNetworkImage için kullanılır.
   String resimUrl(int id) => '${_dio.options.baseUrl}/api/Malzeme/$id/resim';
 

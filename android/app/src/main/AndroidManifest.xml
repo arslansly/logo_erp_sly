@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- AI asistanı sesli giriş (speech_to_text) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Barkod okuyucu (mobile_scanner) -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:label="logo_mobil"
         android:name="${applicationName}"

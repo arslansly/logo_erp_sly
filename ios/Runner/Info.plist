@@ -9,9 +9,9 @@
 	<string>Sesli komut vermek için mikrofon erişimi gerekir.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Sesli komutlarınızı metne çevirmek için konuşma tanıma kullanılır.</string>
-	<!-- Masraf fiş fotoğrafı (image_picker) -->
+	<!-- Masraf fiş fotoğrafı (image_picker) ve barkod okuyucu (mobile_scanner) -->
 	<key>NSCameraUsageDescription</key>
-	<string>Masraf fişlerinizi fotoğraflamak için kamera erişimi gerekir.</string>
+	<string>Masraf fişlerinizi fotoğraflamak ve barkod okumak için kamera erişimi gerekir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Masraf fişi fotoğrafı seçmek için galeri erişimi gerekir.</string>
 	<key>CFBundleDevelopmentRegion</key>

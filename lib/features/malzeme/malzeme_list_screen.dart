@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/widgets/barkod_tarayici.dart';
 import 'malzeme_detay_screen.dart';
 import 'malzeme_image.dart';
 import 'malzeme_model.dart';
@@ -176,6 +177,12 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
               AppTypography.body.copyWith(color: AppColors.slate500, fontSize: 14),
           prefixIcon: const Icon(Icons.search_rounded,
               color: AppColors.slate500, size: 22),
+          suffixIcon: IconButton(
+            tooltip: 'Barkod tara',
+            icon: const Icon(Icons.qr_code_scanner_rounded,
+                color: AppColors.accent, size: 22),
+            onPressed: _barkodTara,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -183,6 +190,58 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
         onChanged: _onSearchChanged,
       ),
     );
+  }
+
+  Future<void> _barkodTara() async {
+    final barkod = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarkodTarayici()),
+    );
+    if (barkod == null || !mounted) return;
+
+    // Arama sırasında kısa yükleme göstergesi
+    final loadingOverlay = OverlayEntry(
+      builder: (_) => const ColoredBox(
+        color: Colors.black26,
+        child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+      ),
+    );
+    Overlay.of(context).insert(loadingOverlay);
+
+    try {
+      final malzeme = await malzemeService.getMalzemeByBarkod(barkod);
+      loadingOverlay.remove();
+      if (!mounted) return;
+
+      if (malzeme == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Barkod bulunamadı: $barkod'),
+            backgroundColor: AppColors.negative,
+          ),
+        );
+        return;
+      }
+
+      if (widget.selectionMode) {
+        Navigator.of(context).pop(malzeme);
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) =>
+                MalzemeDetayScreen(malzemeId: malzeme.id, initialMalzeme: malzeme),
+          ),
+        );
+      }
+    } catch (e) {
+      loadingOverlay.remove();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: AppColors.negative,
+        ),
+      );
+    }
   }
 
   Widget _buildFilters() {
