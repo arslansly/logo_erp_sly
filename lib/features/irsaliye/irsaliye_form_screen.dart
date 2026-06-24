@@ -11,6 +11,7 @@ import '../cari/cari_list_screen.dart';
 import '../cari/cari_model.dart';
 import '../fatura/currency_model.dart';
 import '../fatura/lookup_service.dart';
+import '../../core/widgets/barkod_tarayici.dart';
 import '../malzeme/malzeme_list_screen.dart';
 import '../malzeme/malzeme_model.dart';
 import '../malzeme/malzeme_service.dart';
@@ -347,6 +348,7 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
                   kdvDahil: _kdvDahil,
                   onChanged: () => setState(() {}),
                   onPickMalzeme: () => _pickMalzemeForLine(i),
+                  onPickMalzemeBarkod: () => _pickMalzemeByBarkodForLine(i),
                   onDelete: () => _removeLine(i),
                 ),
               ),
@@ -482,6 +484,50 @@ class _IrsaliyeFormScreenState extends State<IrsaliyeFormScreen> {
     } catch (_) {
       // Detay alınamazsa sessiz geç
     }
+  }
+
+  Future<void> _pickMalzemeByBarkodForLine(int index) async {
+    final barkod = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarkodTarayici()),
+    );
+    if (barkod == null || !mounted) return;
+
+    Malzeme? malzeme;
+    try {
+      malzeme = await malzemeService.getMalzemeByBarkod(barkod);
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    if (malzeme == null) {
+      final result = await Navigator.push<Malzeme>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MalzemeListScreen(
+            selectionMode: true,
+            initialSearch: barkod,
+          ),
+        ),
+      );
+      if (result == null || !mounted) return;
+      malzeme = result;
+    }
+
+    setState(() => _lines[index].setMalzeme(malzeme!));
+
+    try {
+      final detay = await malzemeService.getMalzemeDetay(malzeme.id);
+      if (!mounted) return;
+      setState(() {
+        final l = _lines[index];
+        l.gercekStok = detay.gercekStok;
+        final isSatis = _tur?.kategori == 'Satış';
+        final tanimli = isSatis ? detay.satisFiyati : detay.satinalmaFiyati;
+        if (l.priceC.text.trim().isEmpty && tanimli > 0) {
+          l.priceC.text = _fmtPlain(tanimli);
+        }
+      });
+    } catch (_) {}
   }
 
   void _toggleKdvDahil(bool yeniDeger) {
@@ -1466,6 +1512,7 @@ class _LineCard extends StatelessWidget {
   final bool kdvDahil;
   final VoidCallback onChanged;
   final VoidCallback onPickMalzeme;
+  final VoidCallback onPickMalzemeBarkod;
   final VoidCallback onDelete;
 
   const _LineCard({
@@ -1474,6 +1521,7 @@ class _LineCard extends StatelessWidget {
     required this.kdvDahil,
     required this.onChanged,
     required this.onPickMalzeme,
+    required this.onPickMalzemeBarkod,
     required this.onDelete,
   });
 
@@ -1534,6 +1582,12 @@ class _LineCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Barkod tara',
+                icon: const Icon(Icons.qr_code_scanner_rounded,
+                    size: 20, color: AppColors.accent),
+                onPressed: onPickMalzemeBarkod,
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,

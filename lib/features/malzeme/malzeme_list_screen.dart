@@ -14,7 +14,9 @@ class MalzemeListScreen extends StatefulWidget {
   /// `true` ise tıklanan malzeme `Navigator.pop(context, malzeme)` ile döner;
   /// detay ekranına push yapılmaz. Fatura formu malzeme seçici için kullanır.
   final bool selectionMode;
-  const MalzemeListScreen({super.key, this.selectionMode = false});
+  /// Açılışta arama kutusuna yazılacak başlangıç değeri (barkod fallback için).
+  final String? initialSearch;
+  const MalzemeListScreen({super.key, this.selectionMode = false, this.initialSearch});
 
   @override
   State<MalzemeListScreen> createState() => _MalzemeListScreenState();
@@ -51,6 +53,10 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+    if (widget.initialSearch != null && widget.initialSearch!.isNotEmpty) {
+      _searchQuery = widget.initialSearch!;
+      _searchController.text = widget.initialSearch!;
+    }
     _loadData(reset: true);
   }
 

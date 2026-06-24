@@ -11,6 +11,7 @@ import '../cari/cari_list_screen.dart';
 import '../cari/cari_model.dart';
 import '../fatura/currency_model.dart';
 import '../fatura/lookup_service.dart';
+import '../../core/widgets/barkod_tarayici.dart';
 import '../malzeme/malzeme_list_screen.dart';
 import '../malzeme/malzeme_model.dart';
 import '../malzeme/malzeme_service.dart';
@@ -404,6 +405,7 @@ class _SiparisFormScreenState extends State<SiparisFormScreen> {
                   ficheTermin: _terminDate,
                   onChanged: () => setState(() {}),
                   onPickMalzeme: () => _pickMalzemeForLine(i),
+                  onPickMalzemeBarkod: () => _pickMalzemeByBarkodForLine(i),
                   onPickTermin: () => _pickTerminForLine(i),
                   onDelete: () => _removeLine(i),
                 ),
@@ -532,6 +534,49 @@ class _SiparisFormScreenState extends State<SiparisFormScreen> {
     } catch (_) {
       // Detay alınamazsa sessiz geç — kullanıcı manuel girer
     }
+  }
+
+  Future<void> _pickMalzemeByBarkodForLine(int index) async {
+    final barkod = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const BarkodTarayici()),
+    );
+    if (barkod == null || !mounted) return;
+
+    Malzeme? malzeme;
+    try {
+      malzeme = await malzemeService.getMalzemeByBarkod(barkod);
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    if (malzeme == null) {
+      final result = await Navigator.push<Malzeme>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MalzemeListScreen(
+            selectionMode: true,
+            initialSearch: barkod,
+          ),
+        ),
+      );
+      if (result == null || !mounted) return;
+      malzeme = result;
+    }
+
+    setState(() => _lines[index].setMalzeme(malzeme!));
+
+    try {
+      final detay = await malzemeService.getMalzemeDetay(malzeme.id);
+      if (!mounted) return;
+      setState(() {
+        final l = _lines[index];
+        final isSatis = _tur?.kategori == 'Satış';
+        final tanimli = isSatis ? detay.satisFiyati : detay.satinalmaFiyati;
+        if (l.priceC.text.trim().isEmpty && tanimli > 0) {
+          l.priceC.text = _fmtPlain(tanimli);
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> _pickTerminForLine(int index) async {
@@ -1519,6 +1564,7 @@ class _LineCard extends StatelessWidget {
   final DateTime? ficheTermin;
   final VoidCallback onChanged;
   final VoidCallback onPickMalzeme;
+  final VoidCallback onPickMalzemeBarkod;
   final VoidCallback onPickTermin;
   final VoidCallback onDelete;
 
@@ -1529,6 +1575,7 @@ class _LineCard extends StatelessWidget {
     required this.ficheTermin,
     required this.onChanged,
     required this.onPickMalzeme,
+    required this.onPickMalzemeBarkod,
     required this.onPickTermin,
     required this.onDelete,
   });
@@ -1592,6 +1639,12 @@ class _LineCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Barkod tara',
+                icon: const Icon(Icons.qr_code_scanner_rounded,
+                    size: 20, color: AppColors.accent),
+                onPressed: onPickMalzemeBarkod,
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,
