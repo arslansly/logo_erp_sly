@@ -49,13 +49,30 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: false
+  macos:
+    generate: false
+
+flutter_native_splash:
+  color: "#000000"
+  image: assets/images/sembol.png
+  color_dark: "#000000"
+  image_dark: assets/images/sembol.png
+  android: true
+  ios: true
+  android_12:
+    image: assets/images/sembol.png
+    color: "#000000"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -74,6 +91,10 @@ flutter:
     - assets/fonts/Inter-Regular.ttf
     - assets/fonts/Inter-SemiBold.ttf
     - assets/fonts/Inter-Bold.ttf
+    - assets/images/app_icon.png
+    - assets/images/sembol.png
+    - assets/images/yatay_logo.png
+    - assets/images/koyu_zemin.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

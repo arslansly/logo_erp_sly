@@ -153,47 +153,47 @@ class WelcomeScreen extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
+        // Dış glow halkası
         Container(
-          width: 100,
-          height: 100,
+          width: 108,
+          height: 108,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(30),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.accent.withValues(alpha: 0.4),
-                AppColors.pink.withValues(alpha: 0.3),
+                AppColors.accent.withValues(alpha: 0.35),
+                AppColors.pink.withValues(alpha: 0.25),
               ],
             ),
           ),
         ),
+        // İç container — logo görseli
         Container(
-          width: 76,
-          height: 76,
+          width: 84,
+          height: 84,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.accent, AppColors.cyan],
-            ),
+            borderRadius: BorderRadius.circular(24),
+            color: Colors.white.withValues(alpha: 0.08),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.5),
-                blurRadius: 32,
-                offset: const Offset(0, 12),
+                color: AppColors.accent.withValues(alpha: 0.45),
+                blurRadius: 36,
+                offset: const Offset(0, 14),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: Colors.white.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
-          child: const Icon(
-            Icons.dashboard_rounded,
-            color: Colors.white,
-            size: 38,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(23),
+            child: Image.asset(
+              'assets/images/sembol.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ],

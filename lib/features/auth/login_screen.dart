@@ -366,23 +366,30 @@ class _BrandTag extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Küçük sembol logosu — pulsing glow efektli
         AnimatedBuilder(
           animation: cosmos,
           builder: (_, __) {
             final t = 0.5 + 0.5 * math.sin(cosmos.value * 2 * math.pi * 2);
             return Container(
-              width: 6,
-              height: 6,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _EdPalette.accent.withValues(alpha: 0.5 + 0.5 * t),
+                borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: _EdPalette.accent.withValues(alpha: 0.6 * t),
-                    blurRadius: 6,
+                    color: _EdPalette.accent.withValues(alpha: 0.45 * t),
+                    blurRadius: 10,
                     spreadRadius: 1,
                   ),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/sembol.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             );
           },
