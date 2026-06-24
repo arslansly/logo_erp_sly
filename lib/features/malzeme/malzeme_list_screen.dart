@@ -34,6 +34,7 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
   bool _sadeceStokYok = false; // 'Stoğu olmayanlar' filtresi açık mı?
   int? _turFilter; // CARDTYPE filtresi (null = tüm türler)
   Timer? _debounce;
+  final TextEditingController _searchController = TextEditingController();
 
   // Servise gidecek stok durumu:
   // - Seçim modunda: varsayılan tümü (null), filtre açıksa sadece 'yok'.
@@ -56,6 +57,7 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -171,6 +173,7 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
         borderRadius: BorderRadius.circular(14),
       ),
       child: TextField(
+        controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Malzeme ara — ad, kod...',
           hintStyle:
@@ -198,7 +201,7 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
     );
     if (barkod == null || !mounted) return;
 
-    // Arama sırasında kısa yükleme göstergesi
+    // 1. Önce Logo UNITBARCODE tablosunda tam eşleşme ara
     final loadingOverlay = OverlayEntry(
       builder: (_) => const ColoredBox(
         color: Colors.black26,
@@ -212,35 +215,32 @@ class _MalzemeListScreenState extends State<MalzemeListScreen> {
       loadingOverlay.remove();
       if (!mounted) return;
 
-      if (malzeme == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Barkod bulunamadı: $barkod'),
-            backgroundColor: AppColors.negative,
-          ),
-        );
+      if (malzeme != null) {
+        // Barkod tabloda kayıtlı → direkt detaya git (veya seçim modunda döndür)
+        if (widget.selectionMode) {
+          Navigator.of(context).pop(malzeme);
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  MalzemeDetayScreen(malzemeId: malzeme.id, initialMalzeme: malzeme),
+            ),
+          );
+        }
         return;
       }
 
-      if (widget.selectionMode) {
-        Navigator.of(context).pop(malzeme);
-      } else {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) =>
-                MalzemeDetayScreen(malzemeId: malzeme.id, initialMalzeme: malzeme),
-          ),
-        );
-      }
+      // 2. UNITBARCODE'da bulunamadı → okunan değeri arama kutusuna yaz ve listeyi filtrele
+      _searchController.text = barkod;
+      _searchQuery = barkod;
+      _loadData(reset: true);
     } catch (e) {
       loadingOverlay.remove();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Hata: $e'),
-          backgroundColor: AppColors.negative,
-        ),
-      );
+      // Hata durumunda da arama kutusuna yaz — kullanıcı manuel devam edebilir
+      _searchController.text = barkod;
+      _searchQuery = barkod;
+      _loadData(reset: true);
     }
   }
 
